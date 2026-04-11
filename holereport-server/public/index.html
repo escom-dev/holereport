@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hole Report Gallery</title>
+<style>
+  :root {
+    --bg:      #0f1117;
+    --surface: #1a1d27;
+    --card:    #21253a;
+    --border:  #2e3250;
+    --accent:  #4f8ef7;
+    --green:   #34d399;
+    --yellow:  #fbbf24;
+    --red:     #f87171;
+    --text:    #e2e8f0;
+    --muted:   #8892a4;
+    --radius:  12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .logo span { color: var(--accent); }
+  .header-stats { margin-left: auto; display: flex; gap: 20px; }
+  .stat { text-align: center; }
+  .stat-n { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .stat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  /* ── Language toggle ── */
+  .lang-btn {
+    padding: 5px 12px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: border-color .2s;
+    letter-spacing: .5px;
+  }
+  .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; padding: 0 24px;
+  }
+  .tab-btn {
+    padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: color .2s, border-color .2s;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* ── Controls ── */
+  .controls {
+    padding: 20px 24px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap input {
+    width: 100%; padding: 10px 12px 10px 36px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px;
+  }
+  .search-wrap input:focus { outline: none; border-color: var(--accent); }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  select {
+    padding: 10px 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+  .view-toggle { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .view-toggle button {
+    padding: 9px 14px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px;
+    transition: all .2s;
+  }
+  .view-toggle button.active { background: var(--accent); color: #fff; }
+
+  /* ── User filter banner ── */
+  .user-filter-banner {
+    display: none; padding: 10px 24px;
+    background: rgba(79,142,247,.1); border-bottom: 1px solid rgba(79,142,247,.25);
+    align-items: center; gap: 12px; font-size: 13px;
+  }
+  .user-filter-banner.visible { display: flex; }
+  .user-filter-banner strong { color: var(--accent); }
+  .clear-filter-btn {
+    margin-left: auto; padding: 4px 12px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 12px; cursor: pointer;
+  }
+  .clear-filter-btn:hover { border-color: var(--accent); }
+
+  /* ── Gallery ── */
+  .gallery { padding: 24px; }
+  #photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  #photo-grid.list-view { grid-template-columns: 1fr; gap: 8px; }
+
+  /* ── Photo card ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 24px rgba(79,142,247,.15); }
+  .card-thumb {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+    background: var(--surface);
+  }
+  .list-view .card { display: flex; }
+  .list-view .card-thumb { width: 120px; height: 90px; aspect-ratio: unset; flex-shrink: 0; }
+  .card-body { padding: 12px 14px; }
+  .card-date { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .card-address { font-size: 13px; font-weight: 500; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 20px; display: flex; align-items: center; gap: 4px;
+  }
+  .badge-gps  { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.3); }
+  .badge-meas { background: rgba(79,142,247,.15); color: var(--accent); border: 1px solid rgba(79,142,247,.3); }
+  .badge-size { background: rgba(139,148,158,.1);  color: var(--muted);  border: 1px solid rgba(139,148,158,.2); }
+
+  /* ── Users panel ── */
+  #users-panel { padding: 24px; }
+  .users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .user-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    transition: border-color .2s, transform .2s;
+  }
+  .user-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .user-card-head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .user-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .user-device-id {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    word-break: break-all;
+  }
+  .user-device-short {
+    font-size: 11px; color: var(--muted); margin-top: 2px;
+  }
+  .user-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;
+  }
+  .user-stat-box {
+    background: var(--surface); border-radius: 8px; padding: 10px 12px;
+  }
+  .user-stat-n { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .user-stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .user-dates { font-size: 11px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+  .user-dates strong { color: var(--text); }
+  .view-photos-btn {
+    width: 100%; padding: 9px; background: rgba(79,142,247,.12);
+    border: 1px solid rgba(79,142,247,.3); border-radius: 8px;
+    color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .2s;
+  }
+  .view-photos-btn:hover { background: rgba(79,142,247,.22); }
+
+  /* ── User type badge ── */
+  .user-type-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; text-transform: uppercase;
+    letter-spacing: .5px; margin-bottom: 8px;
+  }
+  .utype-user        { background: rgba(136,146,164,.18); color: #8892a4; border: 1px solid rgba(136,146,164,.3); }
+  .utype-admin       { background: rgba(79,142,247,.18);  color: #4f8ef7; border: 1px solid rgba(79,142,247,.3); }
+  .utype-cityadmin   { background: rgba(251,191,36,.18);  color: #fbbf24; border: 1px solid rgba(251,191,36,.3); }
+  .utype-superadmin  { background: rgba(248,113,113,.18); color: #f87171; border: 1px solid rgba(248,113,113,.3); }
+  .user-mail-row { font-size: 12px; color: var(--muted); margin-bottom: 12px; word-break: break-all; }
+  .user-mail-row a { color: var(--accent); text-decoration: none; }
+
+  /* ── User edit modal ── */
+  .user-edit-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    z-index: 500; align-items: center; justify-content: center;
+  }
+  .user-edit-overlay.open { display: flex; }
+  .user-edit-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px; width: 100%; max-width: 400px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .user-edit-box h3 { font-size: 16px; font-weight: 700; }
+  .user-edit-box label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .user-edit-box input, .user-edit-box select {
+    width: 100%; padding: 9px 12px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 14px;
+  }
+  .user-edit-box input:focus, .user-edit-box select:focus { outline: none; border-color: var(--accent); }
+  .user-edit-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-save { padding: 9px 20px; background: var(--accent); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-save:hover { opacity: .85; }
+  .btn-cancel { padding: 9px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer; }
+  .btn-cancel:hover { border-color: var(--accent); }
+  .user-edit-msg { font-size: 13px; color: var(--green); min-height: 18px; }
+
+  /* ── Pagination ── */
+  .pagination {
+    display: flex; justify-content: center; gap: 8px; padding: 24px;
+  }
+  .pagination button {
+    padding: 8px 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); cursor: pointer; font-size: 14px;
+    transition: all .2s;
+  }
+  .pagination button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+  .pagination button.active { background: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 80px 24px; color: var(--muted); }
+  .empty svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: .4; }
+  .empty h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .empty p  { font-size: 14px; }
+
+  /* ── Spinner ── */
+  .spinner { display: flex; justify-content: center; padding: 60px; }
+  .spin {
+    width: 40px; height: 40px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    z-index: 200; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; max-width: 900px; width: calc(100% - 32px);
+    max-height: 90vh; overflow-y: auto;
+    display: flex; flex-direction: column;
+    animation: fadeUp .25s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } }
+  .modal-header {
+    padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--surface); z-index: 1;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--card);
+    border: none; color: var(--text); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .modal-close:hover { background: var(--red); }
+  .modal-body { display: flex; gap: 0; }
+  .modal-img-col { flex: 1.2; min-width: 0; }
+  .modal-img-col img { width: 100%; display: block; max-height: 60vh; object-fit: contain; background: #000; }
+  .modal-info-col { flex: 1; padding: 24px; min-width: 280px; border-left: 1px solid var(--border); }
+  @media (max-width: 640px) {
+    .modal-body { flex-direction: column; }
+    .modal-info-col { border-left: none; border-top: 1px solid var(--border); min-width: 0; }
+  }
+  .info-section { margin-bottom: 20px; }
+  .info-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 10px; }
+  .info-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+  .info-label { color: var(--muted); width: 76px; flex-shrink: 0; }
+  .info-value { word-break: break-all; }
+  .meas-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px;
+  }
+  .meas-val { font-weight: 700; color: var(--yellow); }
+  .modal-actions {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 18px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: opacity .2s;
+    text-decoration: none;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-danger  { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+  .btn-ghost   { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .copy-btn { cursor: pointer; color: var(--accent); background: none; border: none; padding: 0 4px; font-size: 13px; }
+  .copy-btn:hover { text-decoration: underline; }
+  .map-link { color: var(--accent); text-decoration: none; font-size: 12px; }
+  .map-link:hover { text-decoration: underline; }
+
+  /* ── Date inputs ── */
+  input[type=date] {
+    padding: 10px 12px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer;
+    color-scheme: dark;
+  }
+  input[type=date]:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Category badge ── */
+  .badge-cat { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+
+  /* ── Status ── */
+  .badge-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+  .status-select {
+    width: 100%; padding: 8px 10px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px; cursor: pointer; margin-top: 4px;
+  }
+  .status-select:focus { outline: none; border-color: var(--accent); }
+  .status-saved { font-size: 11px; color: var(--green); margin-left: 8px; display: none; }
+  .status-saved.show { display: inline; }
+
+  /* ── Login button ── */
+  .login-btn {
+    padding: 6px 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: border-color .2s; display: flex; align-items: center; gap: 6px;
+  }
+  .login-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .login-btn.logged-in { border-color: var(--green); color: var(--green); }
+
+  /* ── Login modal ── */
+  .login-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75);
+    z-index: 600; align-items: center; justify-content: center;
+  }
+  .login-overlay.open { display: flex; }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px; width: 100%; max-width: 360px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .login-box h3 { font-size: 18px; font-weight: 700; text-align: center; }
+  .login-box label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .login-box input {
+    width: 100%; padding: 10px 12px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 14px;
+  }
+  .login-box input:focus { outline: none; border-color: var(--accent); }
+  .login-submit {
+    width: 100%; padding: 11px; background: var(--accent); border: none;
+    border-radius: 8px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .login-submit:hover { opacity: .88; }
+  .login-err { font-size: 13px; color: var(--red); text-align: center; min-height: 18px; }
+  .login-footer { font-size: 12px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📸 Hole report</div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-n" id="stat-total">—</div><div class="stat-l" data-i18n="stat.photos">Photos</div></div>
+    <div class="stat"><div class="stat-n" id="stat-users">—</div><div class="stat-l" data-i18n="stat.devices">Devices</div></div>
+    <div class="stat"><div class="stat-n" id="stat-meas">—</div><div class="stat-l" data-i18n="stat.measurements">Measurements</div></div>
+  </div>
+  <button id="loginBtn" class="login-btn" onclick="handleLoginBtn()">👤 <span data-i18n="login.btn">Sign In</span></button>
+  <button id="langBtn" class="lang-btn" onclick="setLang(currentLang==='en'?'bg':'en')">BG</button>
+</header>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-photos" onclick="switchTab('photos')"><span data-i18n="tab.photos">📸 Photos</span></button>
+  <button class="tab-btn" id="tab-users" onclick="switchTab('users')"><span data-i18n="tab.devices">📱 Devices</span></button>
+  <a class="tab-btn" href="/map.html" style="text-decoration:none;"><span data-i18n="tab.map">🗺 Map</span></a>
+</div>
+
+<!-- ── Photos tab ── -->
+<div id="photos-tab">
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Search by address…" data-i18n-placeholder="search.placeholder" oninput="filterPhotos()">
+    </div>
+    <select id="sort-sel" onchange="loadPage(1)">
+      <option value="newest" data-i18n="sort.newest">Newest first</option>
+      <option value="oldest" data-i18n="sort.oldest">Oldest first</option>
+    </select>
+    <select id="filter-gps" onchange="filterPhotos()">
+      <option value="all" data-i18n="filter.all">All photos</option>
+      <option value="gps" data-i18n="filter.gps">With GPS</option>
+      <option value="meas" data-i18n="filter.meas">With measurements</option>
+    </select>
+    <input type="date" id="date-from" onchange="filterPhotos()" title="From date">
+    <span style="color:var(--muted);font-size:12px;flex-shrink:0">—</span>
+    <input type="date" id="date-to" onchange="filterPhotos()" title="To date">
+    <select id="filter-status" onchange="filterPhotos()">
+      <option value="all" data-i18n="status.all">All statuses</option>
+      <option value="new" data-i18n="status.new">New</option>
+      <option value="in_progress" data-i18n="status.in_progress">In Progress</option>
+      <option value="resolved" data-i18n="status.resolved">Resolved</option>
+      <option value="closed" data-i18n="status.closed">Closed</option>
+    </select>
+    <select id="filter-category" onchange="filterPhotos()">
+      <option value="all" data-i18n="cat.all">All categories</option>
+    </select>
+    <div class="view-toggle">
+      <button id="btn-grid" class="active" onclick="setView('grid')" title="Grid view">⊞</button>
+      <button id="btn-list" onclick="setView('list')" title="List view">☰</button>
+    </div>
+  </div>
+
+  <!-- User filter banner (shown when filtering by device) -->
+  <div class="user-filter-banner" id="user-banner">
+    <span>📱 <span data-i18n="banner.showing">Showing photos from device:</span> <strong id="banner-device-id"></strong></span>
+    <button class="clear-filter-btn" onclick="clearUserFilter()" data-i18n="banner.clear">✕ Show all</button>
+  </div>
+
+  <div class="gallery">
+    <div id="loading" class="spinner"><div class="spin"></div></div>
+    <div id="photo-grid" style="display:none"></div>
+    <div id="empty" class="empty" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <h3 data-i18n="empty.title">No photos yet</h3>
+      <p data-i18n="empty.desc">Upload photos from your iPhone using the Hole Report app.</p>
+    </div>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- ── Users tab ── -->
+<div id="users-tab" style="display:none">
+  <div id="users-panel">
+    <div id="users-loading" class="spinner" style="display:none"><div class="spin"></div></div>
+    <div class="users-grid" id="users-grid" style="display:none"></div>
+    <div id="users-empty" class="empty" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <h3 data-i18n="empty.devices.title">No devices yet</h3>
+      <p data-i18n="empty.devices.desc">Photos uploaded from iPhones will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h3>🔐 <span data-i18n="login.title">Sign In</span></h3>
+    <div>
+      <label data-i18n="login.email">Email</label>
+      <input type="email" id="loginEmail" placeholder="user@example.com" autocomplete="email">
+    </div>
+    <div>
+      <label data-i18n="login.password">Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') submitLogin()">
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-submit" onclick="submitLogin()" data-i18n="login.submit">Sign In</button>
+    <div class="login-footer" data-i18n="login.footer">Only superadmin accounts can delete photos.</div>
+    <button class="btn-cancel" style="width:100%" onclick="closeLogin()" data-i18n="login.cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- User Edit Modal -->
+<div class="user-edit-overlay" id="userEditOverlay">
+  <div class="user-edit-box">
+    <h3 data-i18n="user.edit.title">Edit User</h3>
+    <input type="hidden" id="editUserId">
+    <div>
+      <label data-i18n="user.edit.type">User Type</label>
+      <select id="editUserType">
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+        <option value="cityadmin">cityadmin</option>
+        <option value="superadmin">superadmin</option>
+      </select>
+    </div>
+    <div>
+      <label data-i18n="user.edit.mail">E-mail</label>
+      <input type="email" id="editUserMail" placeholder="user@example.com">
+    </div>
+    <div>
+      <label data-i18n="user.edit.pass">New Password <span style="color:var(--muted);font-weight:400">(leave blank to keep)</span></label>
+      <input type="password" id="editUserPass" placeholder="••••••••">
+    </div>
+    <div class="user-edit-msg" id="editUserMsg"></div>
+    <div class="user-edit-actions">
+      <button class="btn-cancel" onclick="closeUserEdit()" data-i18n="user.edit.cancel">Cancel</button>
+      <button class="btn-save"   onclick="saveUserEdit()"  data-i18n="user.edit.save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Photo Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Photo Details</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-img-col"><img id="modal-img" src="" alt=""></div>
+      <div class="modal-info-col" id="modal-info"></div>
+    </div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+
+<script>
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const TRANS = {
+  en: {
+    'tab.photos': '📸 Photos', 'tab.devices': '📱 Devices', 'tab.map': '🗺 Map',
+    'stat.photos': 'Photos', 'stat.devices': 'Devices', 'stat.measurements': 'Measurements',
+    'search.placeholder': 'Search by address…',
+    'sort.newest': 'Newest first', 'sort.oldest': 'Oldest first',
+    'filter.all': 'All photos', 'filter.gps': 'With GPS', 'filter.meas': 'With measurements',
+    'status.all': 'All statuses', 'status.new': 'New', 'status.in_progress': 'In Progress',
+    'status.resolved': 'Resolved', 'status.closed': 'Closed',
+    'cat.all': 'All categories', 'cat.section': 'Category',
+    'banner.showing': 'Showing photos from device:', 'banner.clear': '✕ Show all',
+    'empty.title': 'No photos yet', 'empty.desc': 'Upload photos from your iPhone using the Hole Report app.',
+    'empty.devices.title': 'No devices yet', 'empty.devices.desc': 'Photos uploaded from iPhones will appear here.',
+    'info.section': 'Info', 'info.date': 'Date', 'info.size': 'Size', 'info.device': 'Device',
+    'loc.section': 'Location', 'loc.coords': 'Coords', 'loc.alt': 'Altitude', 'loc.address': 'Address',
+    'loc.map': 'Map', 'loc.open': 'Open in Google Maps ↗',
+    'meas.section': 'Measurements', 'stat.section': 'Status',
+    'btn.download': '⬇ Download', 'btn.copyurl': '🔗 Copy URL',
+    'btn.maps': '🗺 Maps', 'btn.devicephotos': '📱 Device photos', 'btn.delete': '🗑 Delete',
+    'user.first': 'First upload:', 'user.last': 'Last upload:',
+    'user.view': 'View', 'user.photos': 'photos', 'user.photo': 'photo',
+    'user.edit': 'Edit', 'user.noemail': 'No email set',
+    'user.edit.title': 'Edit User', 'user.edit.type': 'User Type',
+    'user.edit.mail': 'E-mail', 'user.edit.pass': 'New Password',
+    'user.edit.save': 'Save', 'user.edit.cancel': 'Cancel',
+    'user.edit.saved': 'Saved!', 'user.edit.error': 'Save failed',
+    'login.btn': 'Sign In', 'login.title': 'Sign In', 'login.email': 'Email',
+    'login.password': 'Password', 'login.submit': 'Sign In', 'login.cancel': 'Cancel',
+    'login.footer': 'Only superadmin accounts can delete photos.',
+    'login.error': 'Invalid email or password',
+    'logout.confirm': 'Sign out?',
+    'confirm.delete': 'Delete this photo permanently?',
+    'page.prev': '‹ Prev', 'page.next': 'Next ›',
+    'copied': 'Copied!',
+    'alt.unit': 'm',
+  },
+  bg: {
+    'tab.photos': '📸 Снимки', 'tab.devices': '📱 Устройства', 'tab.map': '🗺 Карта',
+    'stat.photos': 'Снимки', 'stat.devices': 'Устройства', 'stat.measurements': 'Измервания',
+    'search.placeholder': 'Търсене по адрес…',
+    'sort.newest': 'Най-нови', 'sort.oldest': 'Най-стари',
+    'filter.all': 'Всички снимки', 'filter.gps': 'С GPS', 'filter.meas': 'С измервания',
+    'status.all': 'Всички статуси', 'status.new': 'Нова', 'status.in_progress': 'В процес',
+    'status.resolved': 'Решена', 'status.closed': 'Закрита',
+    'cat.all': 'Всички категории', 'cat.section': 'Категория',
+    'banner.showing': 'Снимки от устройство:', 'banner.clear': '✕ Покажи всички',
+    'empty.title': 'Няма снимки', 'empty.desc': 'Качете снимки от iPhone с приложението Hole Report.',
+    'empty.devices.title': 'Няма устройства', 'empty.devices.desc': 'Качените снимки от iPhone ще се покажат тук.',
+    'info.section': 'Информация', 'info.date': 'Дата', 'info.size': 'Размер', 'info.device': 'Устройство',
+    'loc.section': 'Местоположение', 'loc.coords': 'Координати', 'loc.alt': 'Височина', 'loc.address': 'Адрес',
+    'loc.map': 'Карта', 'loc.open': 'Отвори в Google Maps ↗',
+    'meas.section': 'Измервания', 'stat.section': 'Статус',
+    'btn.download': '⬇ Изтегли', 'btn.copyurl': '🔗 Копирай URL',
+    'btn.maps': '🗺 Карти', 'btn.devicephotos': '📱 Снимки на устройство', 'btn.delete': '🗑 Изтрий',
+    'user.first': 'Първо качване:', 'user.last': 'Последно качване:',
+    'user.view': 'Виж', 'user.photos': 'снимки', 'user.photo': 'снимка',
+    'user.edit': 'Редактирай', 'user.noemail': 'Без имейл',
+    'user.edit.title': 'Редактирай потребител', 'user.edit.type': 'Тип потребител',
+    'user.edit.mail': 'Имейл', 'user.edit.pass': 'Нова парола',
+    'user.edit.save': 'Запази', 'user.edit.cancel': 'Отказ',
+    'user.edit.saved': 'Запазено!', 'user.edit.error': 'Грешка при запис',
+    'login.btn': 'Вход', 'login.title': 'Вход', 'login.email': 'Имейл',
+    'login.password': 'Парола', 'login.submit': 'Влез', 'login.cancel': 'Отказ',
+    'login.footer': 'Само superadmin акаунти могат да изтриват снимки.',
+    'login.error': 'Грешен имейл или парола',
+    'logout.confirm': 'Изход?',
+    'confirm.delete': 'Изтрий тази снимка завинаги?',
+    'page.prev': '‹ Предишна', 'page.next': 'Следваща ›',
+    'copied': 'Копирано!',
+    'alt.unit': 'м',
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+  return (TRANS[currentLang] && TRANS[currentLang][key]) || TRANS.en[key] || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = currentLang === 'en' ? 'BG' : 'EN';
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  applyTranslations();
+  // Re-label category options
+  const sel = document.getElementById('filter-category');
+  allCategories.forEach(function(c, i) {
+    const opt = sel.options[i + 1]; // skip "All categories" at index 0
+    if (opt) opt.textContent = lang === 'bg' && c.name ? c.name : (c.name_en || c.name);
+  });
+  // Re-render dynamic content
+  filterPhotos();
+  if (document.getElementById('users-tab').style.display !== 'none') {
+    usersLoaded = false;
+    loadUsers();
+  }
+}
+
+const API = '/api';
+const STATUSES = {
+  new:         { label: 'New',         color: '#60a5fa', bg: 'rgba(96,165,250,.15)',  border: 'rgba(96,165,250,.3)'  },
+  in_progress: { label: 'In Progress', color: '#fbbf24', bg: 'rgba(251,191,36,.15)',  border: 'rgba(251,191,36,.3)'  },
+  resolved:    { label: 'Resolved',    color: '#34d399', bg: 'rgba(52,211,153,.15)',  border: 'rgba(52,211,153,.3)'  },
+  closed:      { label: 'Closed',      color: '#8892a4', bg: 'rgba(136,146,164,.15)', border: 'rgba(136,146,164,.3)' },
+};
+let allPhotos = [], filtered = [], currentPage = 1, perPage = 24, currentView = 'grid';
+let currentUserFilter = null, currentUserDeviceId = null;
+let allCategories = [];
+
+async function loadCategories() {
+  try {
+    const r = await fetch(`${API}/categories.php`);
+    const data = await r.json();
+    allCategories = data.categories || [];
+    const sel = document.getElementById('filter-category');
+    allCategories.forEach(function(c) {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = currentLang === 'bg' && c.name ? c.name : (c.name_en || c.name);
+      sel.appendChild(opt);
+    });
+  } catch(e) { /* categories optional */ }
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('photos-tab').style.display = tab === 'photos' ? '' : 'none';
+  document.getElementById('users-tab').style.display  = tab === 'users'  ? '' : 'none';
+  document.getElementById('tab-photos').classList.toggle('active', tab === 'photos');
+  document.getElementById('tab-users').classList.toggle('active',  tab === 'users');
+  if (tab === 'users') loadUsers();
+}
+
+// ── Photos ───────────────────────────────────────────────────────────────────
+async function loadPage(page = 1) {
+  currentPage = page;
+  const sort = document.getElementById('sort-sel').value;
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('photo-grid').style.display = 'none';
+
+  let url = `${API}/list.php?page=1&limit=500&sort=${sort}`;
+  if (currentUserFilter !== null) url += `&user_id=${currentUserFilter}`;
+
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    allPhotos = data.photos || [];
+    updatePhotoStats();
+    filterPhotos();
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('photo-grid').style.display = 'grid';
+    document.getElementById('photo-grid').innerHTML =
+      `<div style="color:var(--red);padding:20px">Error loading photos: ${e.message}</div>`;
+  }
+}
+
+function updatePhotoStats() {
+  document.getElementById('stat-total').textContent = allPhotos.length;
+  const totalMeas = allPhotos.reduce((s, p) => s + (p.measurement_count || 0), 0);
+  document.getElementById('stat-meas').textContent = totalMeas;
+}
+
+function filterPhotos() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const gpsFilter  = document.getElementById('filter-gps').value;
+  const dateFrom   = document.getElementById('date-from').value;
+  const dateTo     = document.getElementById('date-to').value;
+  const stFilter   = document.getElementById('filter-status').value;
+  const catFilter  = document.getElementById('filter-category').value;
+  filtered = allPhotos.filter(p => {
+    const addr = (p.address || '').toLowerCase();
+    if (q && !addr.includes(q)) return false;
+    if (gpsFilter === 'gps'  && !p.latitude) return false;
+    if (gpsFilter === 'meas' && !p.measurement_count) return false;
+    if (dateFrom || dateTo) {
+      const d = new Date(p.photo_date || p.uploaded_at);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false;
+    }
+    if (stFilter !== 'all' && (p.status || 'new') !== stFilter) return false;
+    if (catFilter !== 'all' && String(p.category_id) !== catFilter) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('photo-grid');
+  const empty = document.getElementById('empty');
+  document.getElementById('loading').style.display = 'none';
+
+  const start = (currentPage - 1) * perPage;
+  const page  = filtered.slice(start, start + perPage);
+
+  if (!filtered.length) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display = currentView === 'grid' ? 'grid' : 'block';
+  grid.innerHTML = page.map(p => cardHTML(p)).join('');
+  renderPagination();
+}
+
+function cardHTML(p) {
+  const date = p.photo_date
+    ? new Date(p.photo_date).toLocaleString()
+    : new Date(p.uploaded_at).toLocaleString();
+  const size = p.size_bytes ? fmtSize(p.size_bytes) : '';
+  const addr = p.address || (p.latitude ? `${p.latitude?.toFixed(4)}, ${p.longitude?.toFixed(4)}` : 'No location');
+  const st = STATUSES[p.status || 'new'];
+  return `<div class="card" onclick='openModal(${JSON.stringify(p)})'>
+    <img class="card-thumb" src="${p.thumb_url || p.photo_url}" alt="" loading="lazy"
+         onerror="this.src='${p.photo_url}'">
+    <div class="card-body">
+      <div class="card-date">${date}</div>
+      <div class="card-address" title="${addr}">${addr}</div>
+      <div class="badges">
+        ${p.latitude ? `<span class="badge badge-gps">📍 GPS</span>` : ''}
+        ${p.measurement_count ? `<span class="badge badge-meas">📐 ${p.measurement_count}</span>` : ''}
+        ${size ? `<span class="badge badge-size">${size}</span>` : ''}
+        ${p.category_name ? `<span class="badge badge-cat" style="background:${hexToRgba(p.category_color||'#3b82f6',.15)};color:${p.category_color||'#3b82f6'};border:1px solid ${hexToRgba(p.category_color||'#3b82f6',.3)}">🏷 ${currentLang==='bg'?p.category_name:(p.category_name_en||p.category_name)}</span>` : ''}
+        <span class="badge badge-status" style="background:${st.bg};color:${st.color};border:1px solid ${st.border}">${t('status.' + (p.status || 'new'))}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+function renderPagination() {
+  const pages = Math.ceil(filtered.length / perPage);
+  if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = `<button onclick="changePage(${currentPage-1})" ${currentPage===1?'disabled':''}>${t('page.prev')}</button>`;
+  const lo = Math.max(1, currentPage-2), hi = Math.min(pages, currentPage+2);
+  if (lo > 1) html += `<button onclick="changePage(1)">1</button>${lo>2?'<span style="padding:8px;color:var(--muted)">…</span>':''}`;
+  for (let i = lo; i <= hi; i++) html += `<button class="${i===currentPage?'active':''}" onclick="changePage(${i})">${i}</button>`;
+  if (hi < pages) html += `${hi<pages-1?'<span style="padding:8px;color:var(--muted)">…</span>':''}<button onclick="changePage(${pages})">${pages}</button>`;
+  html += `<button onclick="changePage(${currentPage+1})" ${currentPage===pages?'disabled':''}>${t('page.next')}</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function changePage(p) {
+  currentPage = p;
+  renderGrid();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── View toggle ───────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('photo-grid').className = v === 'list' ? 'list-view' : '';
+  document.getElementById('btn-grid').classList.toggle('active', v==='grid');
+  document.getElementById('btn-list').classList.toggle('active', v==='list');
+  renderGrid();
+}
+
+// ── User filter ───────────────────────────────────────────────────────────────
+function setUserFilter(userId, deviceId) {
+  currentUserFilter   = userId;
+  currentUserDeviceId = deviceId;
+  const banner = document.getElementById('user-banner');
+  banner.classList.add('visible');
+  document.getElementById('banner-device-id').textContent = shortDeviceId(deviceId);
+  switchTab('photos');
+  loadPage(1);
+}
+
+function clearUserFilter() {
+  currentUserFilter   = null;
+  currentUserDeviceId = null;
+  document.getElementById('user-banner').classList.remove('visible');
+  loadPage(1);
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+let usersLoaded = false;
+
+async function loadUsers() {
+  if (usersLoaded) return;
+  document.getElementById('users-loading').style.display = 'flex';
+  document.getElementById('users-grid').style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/users.php`);
+    const data = await r.json();
+    document.getElementById('stat-users').textContent = data.total || 0;
+    renderUsers(data.users || []);
+    usersLoaded = true;
+  } catch(e) {
+    document.getElementById('users-loading').style.display = 'none';
+    document.getElementById('users-empty').style.display = 'block';
+  }
+}
+
+function renderUsers(users) {
+  const grid  = document.getElementById('users-grid');
+  const empty = document.getElementById('users-empty');
+  document.getElementById('users-loading').style.display = 'none';
+
+  if (!users.length) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+  grid.innerHTML = users.map(u => userCardHTML(u)).join('');
+}
+
+function userTypeCls(type) {
+  const map = { user: 'utype-user', admin: 'utype-admin', cityadmin: 'utype-cityadmin', superadmin: 'utype-superadmin' };
+  return map[type] || 'utype-user';
+}
+
+function userCardHTML(u) {
+  const firstSeen = new Date(u.first_seen).toLocaleDateString();
+  const lastSeen  = new Date(u.last_seen).toLocaleString();
+  const short     = shortDeviceId(u.device_id);
+  const emoji     = deviceEmoji(u.device_id);
+  const type      = u.user_type || 'user';
+  const mailHtml  = u.user_mail
+    ? `<a href="mailto:${u.user_mail}">${u.user_mail}</a>`
+    : `<em>${t('user.noemail')}</em>`;
+  const uData     = encodeURIComponent(JSON.stringify({id:u.id, user_type:type, user_mail:u.user_mail||''}));
+  return `<div class="user-card">
+    <div class="user-card-head">
+      <div class="user-avatar">${emoji}</div>
+      <div>
+        <div class="user-device-id">${short}</div>
+        <div class="user-device-short">ID: ${u.device_id}</div>
+      </div>
+    </div>
+    <span class="user-type-badge ${userTypeCls(type)}">${type}</span>
+    <div class="user-mail-row">✉ ${mailHtml}</div>
+    <div class="user-stats">
+      <div class="user-stat-box">
+        <div class="user-stat-n">${u.photo_count}</div>
+        <div class="user-stat-l">Photos</div>
+      </div>
+      <div class="user-stat-box">
+        <div class="user-stat-n">#${u.id}</div>
+        <div class="user-stat-l">ID</div>
+      </div>
+    </div>
+    <div class="user-dates">
+      <strong>${t('user.first')}</strong> ${firstSeen}<br>
+      <strong>${t('user.last')}</strong> ${lastSeen}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="view-photos-btn" style="flex:1" onclick="setUserFilter(${u.id}, '${u.device_id}')">
+        📸 ${t('user.view')} ${u.photo_count} ${u.photo_count !== 1 ? t('user.photos') : t('user.photo')}
+      </button>
+      <button class="view-photos-btn" style="flex:0 0 auto;padding:9px 14px" onclick="openUserEdit(${uData})">
+        ✏ ${t('user.edit')}
+      </button>
+    </div>
+  </div>`;
+}
+
+function openUserEdit(u) {
+  document.getElementById('editUserId').value   = u.id;
+  document.getElementById('editUserType').value = u.user_type || 'user';
+  document.getElementById('editUserMail').value = u.user_mail || '';
+  document.getElementById('editUserPass').value = '';
+  document.getElementById('editUserMsg').textContent = '';
+  document.getElementById('userEditOverlay').classList.add('open');
+}
+
+function closeUserEdit() {
+  document.getElementById('userEditOverlay').classList.remove('open');
+}
+
+async function saveUserEdit() {
+  const id   = parseInt(document.getElementById('editUserId').value);
+  const type = document.getElementById('editUserType').value;
+  const mail = document.getElementById('editUserMail').value.trim();
+  const pass = document.getElementById('editUserPass').value;
+  const msg  = document.getElementById('editUserMsg');
+  msg.style.color = 'var(--green)';
+  msg.textContent = '';
+  try {
+    const r = await fetch(`${API}/users.php`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id, user_type: type, user_mail: mail, user_password: pass})
+    });
+    const data = await r.json();
+    if (data.ok) {
+      msg.textContent = t('user.edit.saved');
+      usersLoaded = false;
+      setTimeout(() => { closeUserEdit(); loadUsers(); }, 800);
+    } else {
+      msg.style.color = 'var(--red)';
+      msg.textContent = data.error || t('user.edit.error');
+    }
+  } catch(e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = t('user.edit.error');
+  }
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function shortDeviceId(id) {
+  if (!id) return 'Unknown';
+  const parts = id.split('-');
+  return 'iPhone-' + (parts[parts.length - 1] || id).toUpperCase();
+}
+
+function deviceEmoji(id) {
+  const emojis = ['📱','🍎','📷','🔵','🟣','🟡'];
+  if (!id) return '📱';
+  const sum = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  return emojis[sum % emojis.length];
+}
+
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(p) {
+  document.getElementById('modal-img').src = p.photo_url;
+  document.getElementById('modal-title').textContent =
+    p.address || (p.latitude ? 'GPS Tagged Photo' : 'Photo');
+
+  const date = p.photo_date
+    ? new Date(p.photo_date).toLocaleString()
+    : new Date(p.uploaded_at).toLocaleString();
+
+  let info = '<div class="info-section"><h4>📋 ' + t('info.section') + '</h4>'
+    + '<div class="info-row"><span class="info-label">' + t('info.date') + '</span><span class="info-value">' + date + '</span></div>'
+    + '<div class="info-row"><span class="info-label">' + t('info.size') + '</span><span class="info-value">' + (p.size_bytes ? fmtSize(p.size_bytes) : '—') + '</span></div>'
+    + (p.device_id ? '<div class="info-row"><span class="info-label">' + t('info.device') + '</span><span class="info-value">' + shortDeviceId(p.device_id) + '</span></div>' : '')
+    + '</div>';
+
+  if (p.latitude) {
+    const mapUrl = 'https://maps.google.com/?q=' + p.latitude + ',' + p.longitude;
+    info += '<div class="info-section"><h4>📍 ' + t('loc.section') + '</h4>'
+      + '<div class="info-row"><span class="info-label">' + t('loc.coords') + '</span>'
+      + '<span class="info-value">' + p.latitude.toFixed(6) + '°, ' + p.longitude.toFixed(6) + '°'
+      + ' <button class="copy-btn" onclick="copy(\'' + p.latitude.toFixed(6) + ', ' + p.longitude.toFixed(6) + '\')">Copy</button></span></div>'
+      + (p.altitude != null ? '<div class="info-row"><span class="info-label">' + t('loc.alt') + '</span><span class="info-value">' + p.altitude.toFixed(1) + ' ' + t('alt.unit') + '</span></div>' : '')
+      + (p.address ? '<div class="info-row"><span class="info-label">' + t('loc.address') + '</span><span class="info-value">' + p.address + '</span></div>' : '')
+      + '<div class="info-row"><span class="info-label">' + t('loc.map') + '</span>'
+      + '<a href="' + mapUrl + '" target="_blank" class="map-link">' + t('loc.open') + '</a></div>'
+      + '</div>';
+  }
+
+  if (p.category_name) {
+    const catColor = p.category_color || '#3b82f6';
+    const catLabel = currentLang === 'bg' ? p.category_name : (p.category_name_en || p.category_name);
+    info += '<div class="info-section"><h4>🏷 ' + t('cat.section') + '</h4>'
+      + '<div class="info-row"><span class="info-label">' + t('cat.section') + '</span>'
+      + '<span class="info-value"><span style="display:inline-flex;align-items:center;gap:6px">'
+      + '<span style="width:10px;height:10px;border-radius:50%;background:' + catColor + ';display:inline-block"></span>'
+      + catLabel + '</span></span></div></div>';
+  }
+
+  const stKey = p.status || 'new';
+  info += '<div class="info-section"><h4>🏷 ' + t('stat.section') + '</h4>'
+    + '<select class="status-select" id="modal-status-sel" onchange="updateStatus(\'' + p.uuid + '\', this.value)">'
+    + Object.keys(STATUSES).map(function(k) { return '<option value="' + k + '"' + (stKey===k?' selected':'') + '>' + t('status.' + k) + '</option>'; }).join('')
+    + '</select><span class="status-saved" id="status-saved-msg">✓ ' + (currentLang === 'bg' ? 'Запазено' : 'Saved') + '</span></div>';
+
+  if (p.measurements && p.measurements.length) {
+    info += '<div class="info-section"><h4>📐 ' + t('meas.section') + '</h4>';
+    p.measurements.forEach(m => {
+      info += `<div class="meas-item"><span>${m.label}</span><span class="meas-val">${m.display || (m.value_m >= 1 ? m.value_m.toFixed(2)+' m' : (m.value_m*100).toFixed(1)+' cm')}</span></div>`;
+    });
+    info += '</div>';
+  }
+
+  document.getElementById('modal-info').innerHTML = info;
+  document.getElementById('modal-actions').innerHTML =
+    '<a class="btn btn-primary" href="' + p.photo_url + '" download target="_blank">' + t('btn.download') + '</a>'
+    + ' <button class="btn btn-ghost" onclick="copy(\'' + p.photo_url + '\')">' + t('btn.copyurl') + '</button>'
+    + (p.latitude ? ' <a class="btn btn-ghost" href="https://maps.google.com/?q=' + p.latitude + ',' + p.longitude + '" target="_blank">' + t('btn.maps') + '</a>' : '')
+    + (p.user_id ? ' <button class="btn btn-ghost" onclick="closeModal();setUserFilter(' + p.user_id + ',\'' + p.device_id + '\')">' + t('btn.devicephotos') + '</button>' : '')
+    + (currentUser && currentUser.user_type === 'superadmin' ? ' <button class="btn btn-danger" onclick="deletePhoto(\'' + p.uuid + '\')">' + t('btn.delete') + '</button>' : '');
+
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+let currentUser = null;
+
+async function initAuth() {
+  try {
+    const r = await fetch(`${API}/me.php`);
+    const d = await r.json();
+    currentUser = d.user || null;
+  } catch(e) { currentUser = null; }
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const btn = document.getElementById('loginBtn');
+  if (currentUser) {
+    btn.classList.add('logged-in');
+    btn.innerHTML = '👤 ' + (currentUser.user_mail || 'User') +
+      ' &nbsp;<span style="font-size:11px;opacity:.7" data-i18n="logout.confirm">Sign out?</span>';
+    btn.onclick = handleLoginBtn;
+  } else {
+    btn.classList.remove('logged-in');
+    btn.innerHTML = '👤 <span data-i18n="login.btn">' + t('login.btn') + '</span>';
+    btn.onclick = handleLoginBtn;
+  }
+}
+
+function handleLoginBtn() {
+  if (currentUser) {
+    if (confirm(t('logout.confirm'))) logout();
+  } else {
+    openLogin();
+  }
+}
+
+function openLogin() {
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('loginEmail').focus(), 50);
+}
+
+function closeLogin() {
+  document.getElementById('loginOverlay').classList.remove('open');
+}
+
+async function submitLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = t('login.error'); return; }
+  try {
+    const r = await fetch(`${API}/login.php`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    const d = await r.json();
+    if (d.user) {
+      currentUser = d.user;
+      closeLogin();
+      updateAuthUI();
+    } else {
+      errEl.textContent = d.error || t('login.error');
+    }
+  } catch(e) { errEl.textContent = t('login.error'); }
+}
+
+async function logout() {
+  await fetch(`${API}/logout.php`, {method: 'POST'});
+  currentUser = null;
+  updateAuthUI();
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deletePhoto(uuid) {
+  if (!currentUser || currentUser.user_type !== 'superadmin') return;
+  if (!confirm(t('confirm.delete'))) return;
+  try {
+    const r = await fetch(`${API}/delete.php`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `id=${uuid}`
+    });
+    const d = await r.json();
+    if (d.success) {
+      closeModal();
+      allPhotos = allPhotos.filter(p => p.uuid !== uuid);
+      updatePhotoStats();
+      filterPhotos();
+      usersLoaded = false;
+    } else {
+      alert('Error: ' + (d.error || 'Unknown'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/1024/1024).toFixed(1) + ' MB';
+}
+
+function copy(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const el = document.createElement('div');
+    el.textContent = t('copied');
+    Object.assign(el.style, {
+      position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)',
+      background:'var(--accent)', color:'#fff', padding:'8px 20px',
+      borderRadius:'20px', fontSize:'14px', fontWeight:'600', zIndex:9999,
+      animation: 'fadeUp .2s ease'
+    });
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  });
+}
+
+// ── Status update ─────────────────────────────────────────────────────────────
+async function updateStatus(uuid, status) {
+  try {
+    const r = await fetch(`${API}/status.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id=${encodeURIComponent(uuid)}&status=${encodeURIComponent(status)}`
+    });
+    const d = await r.json();
+    if (d.success) {
+      const photo = allPhotos.find(p => p.uuid === uuid);
+      if (photo) { photo.status = status; renderGrid(); }
+      const msg = document.getElementById('status-saved-msg');
+      if (msg) { msg.classList.add('show'); setTimeout(() => msg.classList.remove('show'), 2000); }
+    } else {
+      alert('Error: ' + (d.error || 'Unknown'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+applyTranslations();
+initAuth();
+loadCategories();
+loadPage(1);
+loadUsers();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+Options -Indexes
+DirectoryIndex index.html
+
+# Pretty URLs (optional)
+RewriteEngine On
+RewriteBase /
+
+# Block direct access to uploads directory listing
+RewriteRule ^uploads/?$ - [F,L]
+
+# Security headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Cache static assets
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|ico|css|js)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 7 days"
+</FilesMatch>
