@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hole Report — City Map</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet.draw -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<!-- Leaflet.heat -->
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0f1117; color: #e2e8f0;
+  height: 100vh; display: flex; flex-direction: column;
+}
+
+/* ── Top bar ── */
+.topbar {
+  background: #1a1d27; border-bottom: 1px solid #2d3148;
+  padding: 10px 18px; display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+}
+.topbar h1 { font-size: 1rem; font-weight: 700; color: #facc15; }
+.topbar a  { color: #94a3b8; text-decoration: none; font-size: .85rem; padding: 4px 10px; border-radius: 6px; }
+.topbar a:hover  { background: #2d3148; color: #e2e8f0; }
+.topbar a.active { color: #facc15; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+#topStats { font-size: .8rem; color: #64748b; }
+
+/* ── Layout ── */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 280px; background: #1a1d27; border-right: 1px solid #2d3148;
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  transition: width .25s;
+}
+.sidebar-header {
+  padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #2d3148; flex-shrink: 0;
+}
+.sidebar-header span { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+
+.btn-draw {
+  background: #2563eb; color: #fff; border: none;
+  padding: 5px 12px; border-radius: 6px; font-size: .78rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+}
+.btn-draw.active { background: #dc2626; }
+.btn-draw:hover  { opacity: .9; }
+
+/* District list */
+.district-list { overflow-y: auto; flex: 1; padding: 6px 0; }
+.district-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 12px; cursor: pointer; border-left: 3px solid transparent;
+  transition: background .12s;
+}
+.district-item:hover  { background: #232638; }
+.district-item.active { background: #232638; }
+.district-swatch { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+.district-name   { flex: 1; font-size: .88rem; }
+.district-count  {
+  font-size: .72rem; font-weight: 700; background: #2d3148; color: #64748b;
+  padding: 2px 7px; border-radius: 10px;
+}
+.district-count.has { background: #1e3a5f; color: #60a5fa; }
+.district-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.district-item:hover .district-actions { opacity: 1; }
+.icon-btn {
+  background: #2d3148; border: none; color: #94a3b8;
+  width: 24px; height: 24px; border-radius: 5px; cursor: pointer;
+  font-size: .75rem; display: flex; align-items: center; justify-content: center;
+}
+.icon-btn:hover { background: #3d4460; color: #e2e8f0; }
+.icon-btn.del:hover { background: #450a0a; color: #f87171; }
+
+/* Tree structure */
+.district-toggle {
+  background: none; border: none; color: #64748b; cursor: pointer;
+  font-size: .7rem; width: 16px; flex-shrink: 0; text-align: center; padding: 0;
+}
+.district-toggle:hover { color: #e2e8f0; }
+.district-children {
+  margin-left: 12px; border-left: 2px solid;
+  padding-left: 2px;
+}
+.district-item.child { padding-left: 10px; }
+.district-item.child .district-name { font-size: .82rem; color: #94a3b8; }
+.district-item.child.active .district-name { color: #e2e8f0; }
+
+/* ── District edit panel ── */
+.edit-panel {
+  background: #12151f; border-top: 1px solid #2d3148;
+  padding: 14px; flex-shrink: 0; display: none;
+}
+.edit-panel.visible { display: block; }
+.edit-panel h3 { font-size: .85rem; font-weight: 700; margin-bottom: 12px; color: #e2e8f0; }
+.field { margin-bottom: 9px; }
+.field label { font-size: .7rem; color: #64748b; display: block; margin-bottom: 3px; }
+.field input, .field select {
+  width: 100%; background: #1e2130; border: 1px solid #2d3148; color: #e2e8f0;
+  padding: 6px 9px; border-radius: 6px; font-size: .82rem;
+}
+.field input:focus { outline: none; border-color: #3b82f6; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.color-row { display: flex; align-items: center; gap: 8px; }
+.color-row input[type=color] {
+  width: 36px; height: 30px; padding: 2px; border-radius: 5px; cursor: pointer;
+}
+.panel-btns { display: flex; gap: 8px; margin-top: 12px; }
+.btn-save   { background: #2563eb; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; flex: 1; }
+.btn-cancel { background: #2d3148; color: #e2e8f0; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: .82rem; }
+.err-msg    { color: #f87171; font-size: .75rem; margin-top: 6px; }
+
+.hint {
+  background: #1e2130; border: 1px dashed #3b82f6; border-radius: 8px;
+  padding: 10px 12px; font-size: .78rem; color: #93c5fd; margin-bottom: 10px; line-height: 1.5;
+}
+
+/* ── Map ── */
+#map { width: 100%; height: 100%; }
+
+/* ── Leaflet popup ── */
+.leaflet-popup-content-wrapper {
+  background: #1a1d27; color: #e2e8f0;
+  border: 1px solid #2d3148; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5); padding: 0;
+}
+.leaflet-popup-tip  { background: #1a1d27; }
+.leaflet-popup-content { margin: 0; min-width: 210px; }
+.popup-card { padding: 12px; }
+.popup-thumb {
+  width: 100%; height: 120px; object-fit: cover;
+  border-radius: 7px; display: block; margin-bottom: 9px; background: #2d3148;
+}
+.popup-date { font-size: .8rem; font-weight: 700; margin-bottom: 3px; }
+.popup-addr { font-size: .73rem; color: #94a3b8; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.popup-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 7px; }
+.popup-pill  { background: #1e3a5f; color: #facc15; font-size: .68rem; font-weight: 700; padding: 2px 6px; border-radius: 7px; }
+.popup-open  { display: block; text-align: center; background: #2563eb; color: #fff !important; font-size: .78rem; font-weight: 600; padding: 6px; border-radius: 6px; text-decoration: none; }
+.popup-open:hover { background: #1d4ed8; }
+
+.cluster-badge {
+  background: #2563eb; color: #fff; border-radius: 50%; font-weight: 800;
+  font-size: .85rem; display: flex; align-items: center; justify-content: center;
+  border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+
+/* Leaflet.draw dark overrides */
+.leaflet-draw-toolbar a { background-color: #1e2130 !important; border-color: #2d3148 !important; }
+.leaflet-draw-toolbar a:hover { background-color: #2d3148 !important; }
+.leaflet-draw-guide-dash { background: #3b82f6 !important; }
+
+#loading {
+  position: absolute; inset: 0; background: #0f1117cc;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; font-size: 1rem; color: #94a3b8; gap: 10px;
+}
+#loading.hidden { display: none; }
+.spinner { width: 22px; height: 22px; border: 3px solid #2d3148; border-top-color: #3b82f6; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Topbar buttons ── */
+.topbar-btn {
+  background: #2d3148; color: #94a3b8; border: 1px solid transparent;
+  padding: 5px 12px; border-radius: 6px; font-size: .78rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s;
+  white-space: nowrap;
+}
+.topbar-btn:hover  { background: #3d4460; color: #e2e8f0; }
+.topbar-btn.active { background: #1e3a5f; color: #60a5fa; border-color: #3b82f6; }
+
+/* ── Language toggle ── */
+.lang-btn {
+  padding: 5px 12px; background: #2d3148; border: 1px solid #2e3250;
+  border-radius: 6px; color: #e2e8f0; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: border-color .2s;
+  letter-spacing: .5px;
+}
+.lang-btn:hover { border-color: #3b82f6; color: #60a5fa; }
+
+/* ── Filter bar ── */
+.filter-bar {
+  background: #1a1d27; border-bottom: 1px solid #2d3148;
+  padding: 7px 18px; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.filter-bar select, .filter-bar input[type=date] {
+  background: #12151f; border: 1px solid #2d3148; color: #e2e8f0;
+  padding: 5px 10px; border-radius: 6px; font-size: .78rem; cursor: pointer;
+  color-scheme: dark;
+}
+.filter-bar select:focus, .filter-bar input[type=date]:focus { outline: none; border-color: #3b82f6; }
+.filter-bar label { font-size: .72rem; color: #64748b; white-space: nowrap; }
+.filter-sep { color: #2d3148; font-size: 18px; }
+#filterCount { font-size: .75rem; color: #64748b; margin-left: auto; }
+
+/* ── Temp zone bar ── */
+.tz-bar {
+  background: #1a1d27; border-bottom: 1px solid #2d3148;
+  padding: 8px 18px; display: flex; align-items: center; gap: 14px;
+  font-size: .82rem; color: #e2e8f0; flex-shrink: 0;
+}
+.tz-bar strong { color: #facc15; }
+.tz-btn-export { background: #166534; color: #86efac; border: 1px solid #166534; padding: 5px 14px; border-radius: 6px; font-size: .78rem; font-weight: 600; cursor: pointer; }
+.tz-btn-export:hover { background: #15803d; }
+.tz-btn-save   { background: #1e3a5f; color: #60a5fa; border: 1px solid #2563eb; padding: 5px 14px; border-radius: 6px; font-size: .78rem; font-weight: 600; cursor: pointer; }
+.tz-btn-save:hover { background: #2563eb; color: #fff; }
+.tz-btn-clear  { background: #2d3148; color: #94a3b8; border: none; padding: 5px 10px; border-radius: 6px; font-size: .78rem; cursor: pointer; margin-left: auto; }
+.tz-btn-clear:hover { background: #450a0a; color: #f87171; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📍 Hole Report</h1>
+  <a href="/"><span data-i18n="nav.photos">Photos</span></a>
+  <a href="/map.html" class="active"><span data-i18n="nav.map">Map</span></a>
+  <div class="topbar-right">
+    <span id="topStats">Loading…</span>
+    <button id="langBtn" class="topbar-btn lang-btn" onclick="setLang(currentLang==='en'?'bg':'en')">BG</button>
+    <button id="btnHeat" class="topbar-btn" onclick="toggleHeatmap()">🔥 Heatmap</button>
+    <button id="btnTempZone" class="topbar-btn" onclick="toggleTempZone()">📦 Temp Zone</button>
+  </div>
+</div>
+
+<!-- Photo filter bar -->
+<div class="filter-bar">
+  <label data-i18n="filter.status">Status</label>
+  <select id="mFilterStatus" onchange="applyFilters()">
+    <option value="all" data-i18n="status.all">All statuses</option>
+    <option value="new" data-i18n="status.new">New</option>
+    <option value="in_progress" data-i18n="status.in_progress">In Progress</option>
+    <option value="resolved" data-i18n="status.resolved">Resolved</option>
+    <option value="closed" data-i18n="status.closed">Closed</option>
+  </select>
+
+  <span class="filter-sep">|</span>
+  <label data-i18n="cat.label">Category</label>
+  <select id="mFilterCategory" onchange="applyFilters()">
+    <option value="all" data-i18n="cat.all">All categories</option>
+  </select>
+
+  <span class="filter-sep">|</span>
+  <label data-i18n="filter.from">From</label>
+  <input type="date" id="mFilterFrom" onchange="applyFilters()">
+  <label data-i18n="filter.to">To</label>
+  <input type="date" id="mFilterTo" onchange="applyFilters()">
+
+  <span id="filterCount"></span>
+</div>
+
+<!-- Temp zone status bar -->
+<div id="tzBar" class="tz-bar" style="display:none">
+  <span><span data-i18n="tz.prefix">📦 Temp zone:</span> <strong id="tzCount">0</strong> <span data-i18n="tz.photos">photos selected</span></span>
+  <button class="tz-btn-export" onclick="exportTempZoneCSV()" data-i18n="tz.export">⬇ Export CSV</button>
+  <button class="tz-btn-save"   onclick="saveTempZoneAsDistrict()" data-i18n="tz.save">💾 Save as District</button>
+  <button class="tz-btn-clear"  onclick="clearTempZone()" data-i18n="tz.clear">✕ Clear zone</button>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span data-i18n="sidebar.districts">Districts</span>
+      <button class="btn-draw" id="btnDraw" onclick="toggleDrawMode()">✏️ Draw New</button>
+    </div>
+
+    <div class="district-list" id="districtList">
+      <div style="padding:14px;color:#475569;font-size:.8rem">Loading…</div>
+    </div>
+
+    <!-- Add / Edit panel -->
+    <div class="edit-panel" id="editPanel">
+      <h3 id="panelTitle">New District</h3>
+
+      <div id="drawHint" class="hint" data-i18n="draw.hint">
+        Draw a polygon on the map to define the district boundary
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label data-i18n="field.name">Name (local)</label>
+          <input id="fName" placeholder="Център">
+        </div>
+        <div class="field">
+          <label data-i18n="field.nameen">Name (EN)</label>
+          <input id="fNameEn" placeholder="Center">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label data-i18n="field.slug">Slug</label>
+          <input id="fSlug" placeholder="center">
+        </div>
+        <div class="field">
+          <label data-i18n="field.city">City</label>
+          <input id="fCity" value="Haskovo">
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="field.color">Color</label>
+        <div class="color-row">
+          <input type="color" id="fColor" value="#3b82f6">
+          <span id="fColorHex" style="font-size:.8rem;color:#94a3b8">#3b82f6</span>
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="field.order">Sort order</label>
+        <input id="fOrder" type="number" value="0">
+      </div>
+      <div class="field" id="fieldParent">
+        <label data-i18n="field.parent">Parent district</label>
+        <select id="fParent">
+          <option value="" data-i18n="field.parent.none">— None (top level) —</option>
+        </select>
+      </div>
+
+      <div class="err-msg" id="panelErr"></div>
+      <div class="panel-btns">
+        <button class="btn-save"   onclick="saveDistrict()" data-i18n="btn.save">Save</button>
+        <button class="btn-cancel" onclick="cancelEdit()" data-i18n="btn.cancel2">Cancel</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Map -->
+  <div style="position:relative;flex:1;display:flex;flex-direction:column;min-width:0;">
+    <div id="map" style="flex:1;width:100%;height:100%;min-height:0;"></div>
+    <div id="loading"><div class="spinner"></div> Loading…</div>
+  </div>
+</div>
+
+<script>
+const API_KEY = 'api-key-here';
+
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const TRANS = {
+  en: {
+    'nav.photos': 'Photos', 'nav.map': 'Map',
+    'sidebar.districts': 'Districts',
+    'btn.drawnew': '✏️ Draw New', 'btn.canceldraw': '✕ Cancel Draw',
+    'btn.heatmap': '🔥 Heatmap', 'btn.tempzone': '📦 Temp Zone', 'btn.cancel.tz': '✕ Cancel',
+    'tz.prefix': '📦 Temp zone:', 'tz.photos': 'photos selected',
+    'tz.export': '⬇ Export CSV', 'tz.save': '💾 Save as District', 'tz.clear': '✕ Clear zone',
+    'field.name': 'Name', 'field.nameen': 'Name (EN)', 'field.slug': 'Slug',
+    'field.city': 'City', 'field.color': 'Color', 'field.order': 'Sort order',
+    'field.parent': 'Parent district', 'field.parent.none': '— None (top level) —',
+    'btn.save': 'Save', 'btn.cancel2': 'Cancel', 'btn.delete': 'Delete',
+    'btn.fitall': '⛶ Fit All',
+    'panel.new': 'New District', 'panel.edit': 'Edit District',
+    'draw.hint': 'Draw a polygon on the map to define the district boundary',
+    'stat.prefix': 'photos on map ·', 'stat.districts': 'districts',
+    'confirm.delete': 'Delete this district?',
+    'photo.open': 'Open Photo ↗',
+    'photos.at': 'photos at this location',
+    'more': 'more',
+    'no.alerts': 'No alert',
+    'filter.status': 'Status', 'cat.label': 'Category', 'cat.all': 'All categories',
+    'status.all': 'All statuses', 'status.new': 'New', 'status.in_progress': 'In Progress',
+    'status.resolved': 'Resolved', 'status.closed': 'Closed',
+    'filter.from': 'From', 'filter.to': 'To',
+    'filter.showing': 'showing',
+  },
+  bg: {
+    'nav.photos': 'Снимки', 'nav.map': 'Карта',
+    'sidebar.districts': 'Райони',
+    'btn.drawnew': '✏️ Нов район', 'btn.canceldraw': '✕ Отказ',
+    'btn.heatmap': '🔥 Топлинна карта', 'btn.tempzone': '📦 Временна зона', 'btn.cancel.tz': '✕ Отказ',
+    'tz.prefix': '📦 Временна зона:', 'tz.photos': 'снимки в зоната',
+    'tz.export': '⬇ Експорт CSV', 'tz.save': '💾 Запази като район', 'tz.clear': '✕ Изчисти зона',
+    'field.name': 'Наименование', 'field.nameen': 'Наименование (EN)', 'field.slug': 'Идентификатор',
+    'field.city': 'Град', 'field.color': 'Цвят', 'field.order': 'Наредба',
+    'field.parent': 'Родителски район', 'field.parent.none': '— Няма (главно ниво) —',
+    'btn.save': 'Запази', 'btn.cancel2': 'Отказ', 'btn.delete': 'Изтрий',
+    'btn.fitall': '⛶ Виж всички',
+    'panel.new': 'Нов район', 'panel.edit': 'Редактирай район',
+    'draw.hint': 'Нарисувайте полигон на картата за границата на района',
+    'stat.prefix': 'снимки на картата ·', 'stat.districts': 'района',
+    'confirm.delete': 'Изтрий този район?',
+    'photo.open': 'Отвори снимка ↗',
+    'photos.at': 'снимки на това място',
+    'more': 'още',
+    'no.alerts': 'Без статус',
+    'filter.status': 'Статус', 'cat.label': 'Категория', 'cat.all': 'Всички категории',
+    'status.all': 'Всички статуси', 'status.new': 'Нова', 'status.in_progress': 'В процес',
+    'status.resolved': 'Решена', 'status.closed': 'Закрита',
+    'filter.from': 'От', 'filter.to': 'До',
+    'filter.showing': 'показани',
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+  return (TRANS[currentLang] && TRANS[currentLang][key]) || TRANS.en[key] || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = currentLang === 'en' ? 'BG' : 'EN';
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  applyTranslations();
+  // Update dynamic elements
+  document.getElementById('btnHeat').textContent = t('btn.heatmap');
+  if (!tempZoneMode) document.getElementById('btnTempZone').textContent = t('btn.tempzone');
+  // Update topStats
+  document.getElementById('topStats').textContent =
+    allPhotos.length + ' ' + t('stat.prefix') + ' ' + districts.length + ' ' + t('stat.districts');
+  // Re-label category options in filter
+  const sel = document.getElementById('mFilterCategory');
+  allCategories.forEach(function(c, i) {
+    const opt = sel.options[i + 1];
+    if (opt) opt.textContent = lang === 'bg' && c.name ? c.name : (c.name_en || c.name);
+  });
+  // Refresh district list and markers
+  renderSidebar();
+  renderMarkers(activeId);
+}
+
+// ── Map setup ─────────────────────────────────────────────────────────────────
+const map = L.map('map');
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+  maxZoom: 19,
+}).addTo(map);
+
+// Layer groups
+const districtGroup = L.layerGroup().addTo(map);
+const markerGroup   = L.layerGroup().addTo(map);
+const drawGroup     = new L.FeatureGroup().addTo(map);   // for drawn shapes
+
+// ── Leaflet.draw setup ────────────────────────────────────────────────────────
+const drawControl = new L.Control.Draw({
+  position: 'topright',
+  draw: {
+    polygon: {
+      allowIntersection: false,
+      showArea: true,
+      shapeOptions: { color: '#3b82f6', fillOpacity: 0.2 },
+    },
+    polyline: false, rectangle: false, circle: false,
+    circlemarker: false, marker: false,
+  },
+  edit: { featureGroup: drawGroup, remove: false },
+});
+
+// Don't add draw control automatically — we manage it via the button
+let drawMode   = false;
+let drawHandler = null;
+let editingId   = null;    // district DB id being edited
+let drawnLayer  = null;    // current drawn/edited polygon layer
+let editLayer   = null;    // L.Edit.Poly handler when editing existing shape
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let districts     = [];
+let allPhotos     = [];
+let allCategories = [];
+let activeId      = null;
+let expandedParents = new Set();
+
+// Return [id, ...childIds] for a district
+function getDistrictFamily(id) {
+  return [id, ...districts.filter(d => d.parent_id === id).map(d => d.id)];
+}
+
+// Top-level districts (no parent) that have children
+function isParent(d) {
+  return !d.parent_id && districts.some(c => c.parent_id === d.id);
+}
+
+// ── Toggle draw mode ──────────────────────────────────────────────────────────
+function toggleDrawMode() {
+  if (drawMode) {
+    cancelEdit();
+    return;
+  }
+  startDraw(null);
+}
+
+function startDraw(district) {
+  // Clear previous drawn layer
+  if (drawnLayer) { drawGroup.removeLayer(drawnLayer); drawnLayer = null; }
+  if (editLayer)  { editLayer.disable(); editLayer = null; }
+
+  editingId = district ? district.id : null;
+  drawMode  = true;
+
+  document.getElementById('btnDraw').classList.add('active');
+  document.getElementById('btnDraw').textContent = t('btn.canceldraw');
+  document.getElementById('drawHint').style.display = district ? 'none' : '';
+  openPanel(district);
+
+  if (district) {
+    // Load existing polygon into drawGroup for editing
+    const latlngs = district.coordinates.map(c => [c[0], c[1]]);
+    drawnLayer = L.polygon(latlngs, { color: district.color, fillOpacity: 0.25 });
+    drawGroup.addLayer(drawnLayer);
+    editLayer = new L.EditToolbar.Edit(map, { featureGroup: drawGroup });
+    editLayer.enable();
+    map.fitBounds(drawnLayer.getBounds(), { padding: [30, 30] });
+    document.getElementById('drawHint').style.display = 'none';
+  } else {
+    // Start fresh polygon draw
+    drawHandler = new L.Draw.Polygon(map, {
+      allowIntersection: false,
+      shapeOptions: { color: document.getElementById('fColor').value, fillOpacity: 0.2 },
+    });
+    drawHandler.enable();
+  }
+}
+
+// Capture drawn polygon
+map.on(L.Draw.Event.CREATED, function (e) {
+  if (tempZoneMode) return;   // temp zone drawing handles its own events separately
+  if (drawnLayer) drawGroup.removeLayer(drawnLayer);
+  drawnLayer = e.layer;
+  drawGroup.addLayer(drawnLayer);
+  drawHandler = null;
+  document.getElementById('drawHint').style.display = 'none';
+});
+
+function cancelEdit() {
+  if (drawHandler)  { drawHandler.disable(); drawHandler = null; }
+  if (editLayer)    { editLayer.disable();   editLayer = null; }
+  if (drawnLayer)   { drawGroup.removeLayer(drawnLayer); drawnLayer = null; }
+  drawMode  = false;
+  editingId = null;
+  document.getElementById('btnDraw').classList.remove('active');
+  document.getElementById('btnDraw').textContent = t('btn.drawnew');
+  closePanel();
+  reloadDistricts();   // refresh display
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
+function openPanel(district) {
+  const panel = document.getElementById('editPanel');
+  panel.classList.add('visible');
+  document.getElementById('panelTitle').textContent = district ? t('panel.edit') : t('panel.new');
+  document.getElementById('panelErr').textContent   = '';
+  document.getElementById('fName').value    = district?.name        || '';
+  document.getElementById('fNameEn').value  = district?.name_en     || '';
+  document.getElementById('fSlug').value    = district?.slug        || '';
+  document.getElementById('fCity').value    = district?.city        || 'Haskovo';
+  document.getElementById('fColor').value   = district?.color       || '#3b82f6';
+  document.getElementById('fColorHex').textContent = district?.color || '#3b82f6';
+  document.getElementById('fOrder').value   = district?.sort_order  ?? 0;
+
+  // Populate parent selector — only top-level districts that aren't this one or its children
+  const sel = document.getElementById('fParent');
+  sel.innerHTML = `<option value="">${t('field.parent.none')}</option>`;
+  const hasChildren = district && districts.some(c => c.parent_id === district.id);
+  // If this district already has children it cannot become a child itself
+  document.getElementById('fieldParent').style.display = hasChildren ? 'none' : '';
+  if (!hasChildren) {
+    districts
+      .filter(d => !d.parent_id && d.id !== district?.id)
+      .forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        if (district?.parent_id === d.id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+  }
+}
+
+function closePanel() {
+  document.getElementById('editPanel').classList.remove('visible');
+}
+
+document.getElementById('fColor').addEventListener('input', function() {
+  document.getElementById('fColorHex').textContent = this.value;
+  if (drawnLayer) drawnLayer.setStyle({ color: this.value });
+});
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+async function saveDistrict() {
+  const errEl = document.getElementById('panelErr');
+  errEl.textContent = '';
+
+  // Get coordinates from drawn/edited layer
+  let coords = null;
+  if (drawnLayer) {
+    if (editLayer) editLayer.save();   // commit edits
+    const latlngs = drawnLayer.getLatLngs()[0];
+    coords = latlngs.map(ll => [parseFloat(ll.lat.toFixed(7)), parseFloat(ll.lng.toFixed(7))]);
+  } else if (editingId) {
+    // editing info only, keep original coords
+    const orig = districts.find(d => d.id === editingId);
+    if (orig) coords = orig.coordinates;
+  }
+
+  if (!coords || coords.length < 3) {
+    errEl.textContent = 'Please draw a polygon on the map first (at least 3 points).';
+    return;
+  }
+
+  const parentVal = document.getElementById('fParent').value;
+  const body = {
+    slug:       document.getElementById('fSlug').value.trim(),
+    name:       document.getElementById('fName').value.trim(),
+    name_en:    document.getElementById('fNameEn').value.trim(),
+    color:      document.getElementById('fColor').value,
+    city:       document.getElementById('fCity').value.trim(),
+    sort_order: parseInt(document.getElementById('fOrder').value) || 0,
+    coordinates: coords,
+    parent_id:  parentVal ? parseInt(parentVal) : null,
+  };
+
+  if (!body.slug || !body.name) { errEl.textContent = 'Name and Slug are required.'; return; }
+
+  const method = editingId ? 'PUT' : 'POST';
+  const url    = editingId ? `/api/districts.php?id=${editingId}` : '/api/districts.php';
+
+  try {
+    const res  = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Save failed'; return; }
+    cancelEdit();
+  } catch (e) {
+    errEl.textContent = 'Network error: ' + e.message;
+  }
+}
+
+// ── Load & render districts ───────────────────────────────────────────────────
+async function reloadDistricts() {
+  const res  = await fetch('/api/districts.php', { headers: { 'X-API-Key': API_KEY } });
+  const data = await res.json();
+  districts  = data.districts || [];
+
+  districtGroup.clearLayers();
+  renderSidebar();
+  renderDistrictPolygons();
+  return data;
+}
+
+function renderSidebar() {
+  const list = document.getElementById('districtList');
+  list.innerHTML = '';
+
+  // All item
+  list.appendChild(makeListItem(null));
+
+  // Build tree: top-level items in sort order, children nested under parent
+  const topLevel = districts.filter(d => !d.parent_id);
+  const childMap = {};
+  districts.filter(d => d.parent_id).forEach(d => {
+    (childMap[d.parent_id] = childMap[d.parent_id] || []).push(d);
+  });
+
+  topLevel.forEach(d => {
+    const children = childMap[d.id] || [];
+    list.appendChild(makeListItem(d, false, children.length > 0));
+
+    if (children.length > 0) {
+      const wrap = document.createElement('div');
+      wrap.className = 'district-children';
+      wrap.id = 'children-' + d.id;
+      wrap.style.borderColor = d.color + '55';
+      if (!expandedParents.has(d.id)) wrap.style.display = 'none';
+      children.forEach(c => wrap.appendChild(makeListItem(c, true, false)));
+      list.appendChild(wrap);
+    }
+  });
+}
+
+function makeListItem(d, isChild, hasChildren) {
+  const div = document.createElement('div');
+  const isActive = !d ? activeId === null : activeId === d.id;
+  div.className = 'district-item' + (isChild ? ' child' : '') + (isActive ? ' active' : '');
+
+  if (!d) {
+    div.innerHTML = `
+      <div class="district-swatch" style="background:#64748b"></div>
+      <span class="district-name">All districts</span>
+      <span class="district-count has" id="count-all">—</span>`;
+    div.addEventListener('click', () => selectDistrict(null));
+    return div;
+  }
+
+  const has = d.photo_count > 0;
+  // Family count for parents (self + children)
+  const familyCount = hasChildren
+    ? districts.filter(c => c.parent_id === d.id).reduce((s, c) => s + c.photo_count, d.photo_count)
+    : d.photo_count;
+
+  const toggleBtn = hasChildren
+    ? `<button class="district-toggle" onclick="event.stopPropagation();toggleChildren(${d.id})" title="Expand/collapse">${expandedParents.has(d.id) ? '▾' : '▸'}</button>`
+    : `<span style="width:16px;flex-shrink:0"></span>`;
+
+  div.innerHTML = `
+    ${toggleBtn}
+    <div class="district-swatch" style="background:${d.color};${!d.parent_id && hasChildren ? 'border-radius:2px;width:15px;height:15px;border:2px solid '+d.color+'99' : ''}"></div>
+    <span class="district-name">${d.name}</span>
+    <span class="district-count ${(hasChildren ? familyCount : d.photo_count) > 0 ? 'has' : ''}">${hasChildren ? familyCount : d.photo_count}</span>
+    <div class="district-actions">
+      <button class="icon-btn" title="Edit" onclick="event.stopPropagation();editDistrict(${d.id})">✏️</button>
+      <button class="icon-btn del" title="Delete" onclick="event.stopPropagation();deleteDistrict(${d.id},'${d.name.replace(/'/g,"\\'")}')">🗑</button>
+    </div>`;
+  div.addEventListener('click', () => selectDistrict(d.id));
+  return div;
+}
+
+function toggleChildren(parentId) {
+  if (expandedParents.has(parentId)) expandedParents.delete(parentId);
+  else expandedParents.add(parentId);
+  const wrap = document.getElementById('children-' + parentId);
+  if (wrap) wrap.style.display = expandedParents.has(parentId) ? '' : 'none';
+  renderSidebar();
+}
+
+function renderDistrictPolygons() {
+  // Draw parents first (lower z-order), then children on top
+  const ordered = [
+    ...districts.filter(d => !d.parent_id),
+    ...districts.filter(d =>  d.parent_id),
+  ];
+
+  ordered.forEach(d => {
+    if (!d.coordinates || d.coordinates.length < 3) return;
+    const isChild    = !!d.parent_id;
+    const hasChildren = districts.some(c => c.parent_id === d.id);
+    const isActive   = activeId === d.id || getDistrictFamily(activeId).includes(d.id);
+
+    const poly = L.polygon(d.coordinates.map(c => [c[0], c[1]]), {
+      color:       d.color,
+      weight:      isChild ? 2 : (hasChildren ? 3 : 2),
+      opacity:     .9,
+      dashArray:   hasChildren ? '10 5' : null,
+      fillColor:   d.color,
+      fillOpacity: isActive ? 0.28 : (isChild ? 0.14 : 0.07),
+    }).addTo(districtGroup);
+
+    const familyCount = hasChildren
+      ? districts.filter(c => c.parent_id === d.id).reduce((s, c) => s + c.photo_count, d.photo_count)
+      : d.photo_count;
+    const labelCount = hasChildren ? familyCount : d.photo_count;
+
+    const center = poly.getBounds().getCenter();
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:${d.color}22;border:1px solid ${d.color}88;color:${d.color};
+        font-size:${isChild ? 10 : 11}px;font-weight:700;padding:2px 6px;border-radius:4px;
+        white-space:nowrap;pointer-events:none;${isChild ? 'opacity:.85' : ''}">
+        ${isChild ? '└ ' : ''}${d.name}${labelCount > 0 ? ` (${labelCount})` : ''}</div>`,
+    });
+    L.marker(center, { icon, interactive: false }).addTo(districtGroup);
+
+    const baseOpacity = isChild ? 0.14 : 0.07;
+    poly.on('click',    () => selectDistrict(d.id));
+    poly.on('mouseover', () => { if (activeId !== d.id) poly.setStyle({ fillOpacity: baseOpacity + .1 }); });
+    poly.on('mouseout',  () => { if (activeId !== d.id) poly.setStyle({ fillOpacity: baseOpacity }); });
+  });
+}
+
+function selectDistrict(id) {
+  activeId = id;
+  // Auto-expand parent when a child is selected
+  if (id) {
+    const d = districts.find(x => x.id === id);
+    if (d?.parent_id) expandedParents.add(d.parent_id);
+  }
+  renderSidebar();
+  districtGroup.clearLayers();
+  renderDistrictPolygons();
+
+  if (id) {
+    const family = getDistrictFamily(id);
+    const polys = family
+      .map(fid => districts.find(x => x.id === fid))
+      .filter(d => d && d.coordinates && d.coordinates.length >= 3)
+      .map(d => L.polygon(d.coordinates.map(c => [c[0], c[1]])));
+    if (polys.length === 1) {
+      map.fitBounds(polys[0].getBounds(), { padding: [40, 40] });
+    } else if (polys.length > 1) {
+      map.fitBounds(L.featureGroup(polys).getBounds(), { padding: [40, 40] });
+    }
+  } else {
+    fitAll();
+  }
+  renderMarkers(id);
+}
+
+// ── Edit / Delete ─────────────────────────────────────────────────────────────
+function editDistrict(id) {
+  const d = districts.find(x => x.id === id);
+  if (d) startDraw(d);
+}
+
+async function deleteDistrict(id, name) {
+  if (!confirm(t('confirm.delete') + ' "' + name + '"')) return;
+  await fetch(`/api/districts.php?id=${id}`, {
+    method: 'DELETE', headers: { 'X-API-Key': API_KEY },
+  });
+  reloadDistricts();
+}
+
+// ── Photo markers ─────────────────────────────────────────────────────────────
+async function loadPhotos() {
+  let page = 1, total = Infinity;
+  while (allPhotos.length < total) {
+    const res  = await fetch(`/api/list.php?page=${page}&limit=100`, { headers: { 'X-API-Key': API_KEY } });
+    const data = await res.json();
+    total = data.total;
+    allPhotos = allPhotos.concat(data.photos.filter(p => p.latitude && p.longitude));
+    if (data.page >= data.pages) break;
+    page++;
+  }
+}
+
+function renderMarkers(districtId) {
+  markerGroup.clearLayers();
+
+  let photos = getFilteredPhotos();
+  if (districtId) {
+    const family = getDistrictFamily(districtId);
+    const bounds = family
+      .map(fid => districts.find(x => x.id === fid))
+      .filter(d => d && d.coordinates && d.coordinates.length >= 3)
+      .map(d => L.polygon(d.coordinates.map(c => [c[0], c[1]])).getBounds());
+    if (bounds.length > 0) {
+      photos = photos.filter(p => {
+        if (!p.latitude || !p.longitude) return false;
+        return bounds.some(b =>
+          p.latitude  >= b.getSouth() && p.latitude  <= b.getNorth() &&
+          p.longitude >= b.getWest()  && p.longitude <= b.getEast()
+        );
+      });
+    }
+  }
+
+  // Group by ~1m
+  const groups = {};
+  photos.forEach(p => {
+    const k = `${p.latitude.toFixed(5)}_${p.longitude.toFixed(5)}`;
+    (groups[k] = groups[k] || []).push(p);
+  });
+
+  Object.values(groups).forEach(group => {
+    const f = group[0];
+    const latlng = [f.latitude, f.longitude];
+    if (group.length === 1) {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:30px;height:30px;background:${f.measurement_count > 0 ? '#2563eb' : '#475569'};
+          border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.4);
+          display:flex;align-items:center;justify-content:center;font-size:13px;">
+          ${f.measurement_count > 0 ? '📐' : '📷'}</div>`,
+        iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -17],
+      });
+      L.marker(latlng, { icon }).addTo(markerGroup).bindPopup(() => singlePopup(f), { maxWidth: 230 });
+    } else {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="cluster-badge" style="width:36px;height:36px;">${group.length}</div>`,
+        iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -20],
+      });
+      L.marker(latlng, { icon }).addTo(markerGroup).bindPopup(() => clusterPopup(group), { maxWidth: 270 });
+    }
+  });
+
+  document.getElementById('count-all').textContent = photos.length;
+  const filteredAll = getFilteredPhotos();
+  document.getElementById('filterCount').textContent =
+    filteredAll.length < allPhotos.length
+      ? filteredAll.length + ' / ' + allPhotos.length + ' ' + t('filter.showing')
+      : '';
+}
+
+function fmtDate(s) {
+  return s ? new Date(s).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
+}
+
+function singlePopup(p) {
+  const d = document.createElement('div');
+  d.className = 'popup-card';
+  const pills = (p.measurements || []).map(m => `<span class="popup-pill">${m.display || m.label}</span>`).join('');
+  const catBadge = p.category_name
+    ? `<span class="popup-pill" style="background:${p.category_color||'#3b82f6'}22;color:${p.category_color||'#3b82f6'};border:1px solid ${p.category_color||'#3b82f6'}55">🏷 ${currentLang==='bg'?p.category_name:(p.category_name_en||p.category_name)}</span>`
+    : '';
+  d.innerHTML = `
+    ${p.thumb_url ? `<a href="${p.photo_url}" target="_blank"><img class="popup-thumb" src="${p.thumb_url}" loading="lazy" onerror="this.style.display='none'" style="cursor:pointer"></a>` : ''}
+    <div class="popup-date">${fmtDate(p.uploaded_at)}</div>
+    ${p.address ? `<div class="popup-addr">📍 ${p.address}</div>` : ''}
+    ${(pills || catBadge) ? `<div class="popup-pills">${catBadge}${pills}</div>` : ''}
+    <a class="popup-open" href="${p.photo_url}" target="_blank">${t('photo.open')}</a>`;
+  return d;
+}
+
+function clusterPopup(photos) {
+  const d = document.createElement('div');
+  d.className = 'popup-card';
+  d.innerHTML = `<div class="popup-date" style="margin-bottom:8px">📍 ${photos.length} ${t('photos.at')}</div>`;
+  photos.slice(0, 5).forEach(p => {
+    const a = document.createElement('a');
+    a.href = p.photo_url; a.target = '_blank';
+    a.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #2d3148;text-decoration:none;';
+    a.innerHTML = `<img src="${p.thumb_url}" style="width:38px;height:38px;object-fit:cover;border-radius:4px;background:#2d3148;" onerror="this.style.display='none'">
+      <span style="font-size:.76rem;color:#94a3b8">${fmtDate(p.uploaded_at)}</span>`;
+    d.appendChild(a);
+  });
+  if (photos.length > 5) {
+    const m = document.createElement('div');
+    m.style.cssText = 'font-size:.72rem;color:#64748b;padding-top:5px;text-align:center';
+    m.textContent = `+ ${photos.length - 5} ${t('more')}`;
+    d.appendChild(m);
+  }
+  return d;
+}
+
+function fitAll() {
+  const top = districts.filter(d => !d.parent_id && d.coordinates && d.coordinates.length >= 3);
+  if (!top.length) return;
+  const group = L.featureGroup(top.map(d => L.polygon(d.coordinates.map(c => [c[0], c[1]]))));
+  map.fitBounds(group.getBounds(), { padding: [30, 30] });
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────────────────
+let heatLayer = null;
+let heatOn = false;
+
+function toggleHeatmap() {
+  heatOn = !heatOn;
+  document.getElementById('btnHeat').classList.toggle('active', heatOn);
+  document.getElementById('btnHeat').textContent = t('btn.heatmap');
+  if (heatOn) {
+    const pts = allPhotos.map(p => [p.latitude, p.longitude, p.measurement_count ? p.measurement_count * 0.4 + 0.6 : 0.5]);
+    heatLayer = L.heatLayer(pts, { radius: 28, blur: 18, maxZoom: 17, gradient: { 0.4: '#3b82f6', 0.65: '#fbbf24', 1: '#ef4444' } }).addTo(map);
+  } else {
+    if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+  }
+}
+
+// ── Temp zone ─────────────────────────────────────────────────────────────────
+let tempZoneLayer   = null;
+let tempZoneHandler = null;
+let tempZoneMode    = false;
+const tempGroup     = L.layerGroup().addTo(map);
+
+function toggleTempZone() {
+  if (tempZoneMode) { clearTempZone(); return; }
+  tempZoneMode = true;
+  document.getElementById('btnTempZone').classList.add('active');
+  document.getElementById('btnTempZone').textContent = t('btn.cancel.tz');
+  tempZoneHandler = new L.Draw.Polygon(map, {
+    allowIntersection: false,
+    shapeOptions: { color: '#facc15', fillColor: '#facc15', fillOpacity: 0.12, weight: 2, dashArray: '6 4' },
+  });
+  tempZoneHandler.enable();
+}
+
+map.on(L.Draw.Event.CREATED, function(e) {
+  if (!tempZoneMode) return;   // district drawing handles its own events separately
+  tempZoneHandler = null;
+  if (tempZoneLayer) tempGroup.removeLayer(tempZoneLayer);
+  tempZoneLayer = e.layer;
+  tempGroup.addLayer(tempZoneLayer);
+
+  document.getElementById('btnTempZone').classList.remove('active');
+  document.getElementById('btnTempZone').textContent = t('btn.tempzone');
+  tempZoneMode = false;
+
+  renderMarkers(activeId);
+  const inside = getFilteredPhotos();
+  document.getElementById('tzCount').textContent = inside.length;
+  document.getElementById('tzBar').style.display = '';
+});
+
+function clearTempZone() {
+  if (tempZoneHandler) { tempZoneHandler.disable(); tempZoneHandler = null; }
+  if (tempZoneLayer)   { tempGroup.removeLayer(tempZoneLayer); tempZoneLayer = null; }
+  tempZoneMode = false;
+  document.getElementById('tzBar').style.display = 'none';
+  document.getElementById('btnTempZone').classList.remove('active');
+  document.getElementById('btnTempZone').textContent = t('btn.tempzone');
+  renderMarkers(activeId);
+}
+
+function saveTempZoneAsDistrict() {
+  if (!tempZoneLayer) return;
+
+  // Copy temp zone polygon into drawnLayer so saveDistrict() picks it up
+  if (drawnLayer) drawGroup.removeLayer(drawnLayer);
+  const latlngs = tempZoneLayer.getLatLngs()[0];
+  drawnLayer = L.polygon(latlngs, { color: '#facc15', fillOpacity: 0.2 });
+  drawGroup.addLayer(drawnLayer);
+
+  // Pre-fill the edit panel with sensible defaults for a temp district
+  const count = getFilteredPhotos().length;
+  const now   = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  editingId   = null;
+  drawMode    = true;
+  document.getElementById('btnDraw').classList.add('active');
+  document.getElementById('btnDraw').textContent = t('btn.canceldraw');
+
+  openPanel(null);
+  document.getElementById('fName').value   = 'Temp ' + now;
+  document.getElementById('fNameEn').value = 'Temp ' + now;
+  document.getElementById('fSlug').value   = 'temp-' + now;
+  document.getElementById('fColor').value  = '#facc15';
+  document.getElementById('fColorHex').textContent = '#facc15';
+  document.getElementById('drawHint').style.display = 'none';
+
+  // Scroll sidebar into view
+  document.querySelector('.sidebar').scrollTop = 9999;
+}
+
+function ptInPoly(lat, lng, layer) {
+  const latlngs = layer.getLatLngs()[0];
+  let inside = false;
+  for (let i = 0, j = latlngs.length - 1; i < latlngs.length; j = i++) {
+    const xi = latlngs[i].lng, yi = latlngs[i].lat;
+    const xj = latlngs[j].lng, yj = latlngs[j].lat;
+    if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+function exportTempZoneCSV() {
+  if (!tempZoneLayer) return;
+  const photos = allPhotos.filter(p => p.latitude && p.longitude && ptInPoly(p.latitude, p.longitude, tempZoneLayer));
+  if (!photos.length) { alert('No photos in zone.'); return; }
+
+  const rows = [['UUID','Date','Address','Latitude','Longitude','Altitude (m)','Measurements','Status']];
+  photos.forEach(p => {
+    const date = p.photo_date || p.uploaded_at || '';
+    const meas = (p.measurements || []).map(m => m.display || m.label).join('; ');
+    rows.push([
+      p.uuid || '',
+      date ? new Date(date).toLocaleString() : '',
+      p.address || '',
+      p.latitude ?? '',
+      p.longitude ?? '',
+      p.altitude != null ? p.altitude.toFixed(1) : '',
+      meas,
+      p.status || 'new',
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `zone_export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Categories ────────────────────────────────────────────────────────────────
+async function loadCategories() {
+  try {
+    const res  = await fetch('/api/categories.php');
+    const data = await res.json();
+    allCategories = data.categories || [];
+    const sel = document.getElementById('mFilterCategory');
+    allCategories.forEach(function(c) {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = currentLang === 'bg' && c.name ? c.name : (c.name_en || c.name);
+      sel.appendChild(opt);
+    });
+  } catch(e) { /* optional */ }
+}
+
+// ── Filtered photo set ────────────────────────────────────────────────────────
+function getFilteredPhotos() {
+  const status   = document.getElementById('mFilterStatus').value;
+  const catId    = document.getElementById('mFilterCategory').value;
+  const dateFrom = document.getElementById('mFilterFrom').value;
+  const dateTo   = document.getElementById('mFilterTo').value;
+
+  return allPhotos.filter(p => {
+    if (status !== 'all' && (p.status || 'new') !== status) return false;
+    if (catId  !== 'all' && String(p.category_id) !== catId) return false;
+    if (dateFrom || dateTo) {
+      const d = new Date(p.photo_date || p.uploaded_at);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false;
+    }
+    if (tempZoneLayer && !(p.latitude && p.longitude && ptInPoly(p.latitude, p.longitude, tempZoneLayer))) return false;
+    return true;
+  });
+}
+
+function applyFilters() {
+  renderMarkers(activeId);
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+applyTranslations();
+
+(async () => {
+  try {
+    const data = await reloadDistricts();
+    map.setView(data.center || [41.9346, 25.5556], data.zoom || 13);
+    map.invalidateSize();
+    await Promise.all([loadPhotos(), loadCategories()]);
+    renderMarkers(null);
+    document.getElementById('topStats').textContent = allPhotos.length + ' ' + t('stat.prefix') + ' ' + districts.length + ' ' + t('stat.districts');
+  } catch (e) {
+    console.error(e);
+    map.setView([41.9346, 25.5556], 13);
+    map.invalidateSize();
+    document.getElementById('topStats').textContent = 'Error loading data — check server logs';
+  } finally {
+    document.getElementById('loading').classList.add('hidden');
+  }
+})();
+</script>
+</body>
+</html>
