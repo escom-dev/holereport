@@ -1,7 +1,0 @@
-; HoleReport PHP settings - place at /var/www/holereport/.user.ini
-; or add to /etc/php/8.x/apache2/php.ini
-
-upload_max_filesize = 30M
-post_max_size = 35M
-max_execution_time = 120
-memory_limit = 128M
