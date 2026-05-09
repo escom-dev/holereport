@@ -1,0 +1,139 @@
+/* ── Safety Warning ── */
+"Safety Warning" = "Safety Warning";
+"Do not use this app while driving" = "Do not use this app while driving";
+"Keep your eyes on the road at all times" = "Keep your eyes on the road at all times";
+"Use AR measurement mode only when stationary" = "Use AR measurement mode only when stationary";
+"Mount your phone safely before starting the Drive tab" = "Mount your phone safely before starting the Drive tab";
+"This app is for road documentation purposes only. The developer is not responsible for accidents caused by improper use." = "This app is for road documentation purposes only. The developer is not responsible for accidents caused by improper use.";
+"I Understand — Continue" = "I Understand — Continue";
+
+/* ── Welcome ── */
+"Hole Report" = "Hole Report";
+"AR Measurements + GPS Photo Log" = "AR Measurements + GPS Photo Log";
+"AR Measurements" = "AR Measurements";
+"Measure real-world distances with your camera" = "Measure real-world distances with your camera";
+"GPS Tagging" = "GPS Tagging";
+"Every photo stamped with exact coordinates" = "Every photo stamped with exact coordinates";
+"Server Upload" = "Server Upload";
+"Sync photos to your Hole Report server" = "Sync photos to your Hole Report server";
+"Get Started" = "Get Started";
+
+/* ── Tab bar ── */
+"Camera" = "Camera";
+"Gallery" = "Gallery";
+"Map" = "Map";
+"Settings" = "Settings";
+
+/* ── Settings ── */
+"Server URL" = "Server URL";
+"API Key" = "API Key";
+"Server Configuration" = "Server Configuration";
+"Server URL and API key are built into the app." = "Server URL and API key are built into the app.";
+"Testing…" = "Testing…";
+"Test Connection" = "Test Connection";
+"Connection" = "Connection";
+"Email" = "Email";
+"Password" = "Password";
+"User Type" = "User Type";
+"Creating…" = "Creating…";
+"Create User" = "Create User";
+"Creates a web login account in the server database." = "Creates a web login account in the server database.";
+"Connected to server ✓" = "Connected to server ✓";
+"Connected! %d photo(s) on server." = "Connected! %d photo(s) on server.";
+"HTTP %d — check server" = "HTTP %d — check server";
+"Invalid URL" = "Invalid URL";
+"Invalid server URL" = "Invalid server URL";
+"Invalid server response" = "Invalid server response";
+"Unexpected response" = "Unexpected response";
+"Updated ✓ (%@)" = "Updated ✓ (%@)";
+"Created ✓ (%@)" = "Created ✓ (%@)";
+
+/* ── Camera ── */
+"Acquiring GPS…" = "Acquiring GPS…";
+"Light On" = "Light On";
+"Light" = "Light";
+"Clear" = "Clear";
+"Cancel" = "Cancel";
+"Measure" = "Measure";
+"Point camera at a surface" = "Point camera at a surface";
+"Tap a surface to place the first point" = "Tap a surface to place the first point";
+"Now tap the second point" = "Now tap the second point";
+"No surface detected — move camera slowly over a surface" = "No surface detected — move camera slowly over a surface";
+"Measurement %d" = "Measurement %d";
+"%@ — tap again for another, or capture" = "%@ — tap again for another, or capture";
+
+/* ── Photo preview / upload ── */
+"Category" = "Category";
+"None" = "None";
+"Save" = "Save";
+"Saved" = "Saved";
+"Upload" = "Upload";
+"Uploading…" = "Uploading…";
+"Uploaded ✓" = "Uploaded ✓";
+"Uploaded!" = "Uploaded!";
+"Retry Upload" = "Retry Upload";
+
+/* ── Map ── */
+"No Locations Yet" = "No Locations Yet";
+"Photos with GPS data will appear as markers on the map." = "Photos with GPS data will appear as markers on the map.";
+"%d photos at this location" = "%d photos at this location";
+"Open Photo" = "Open Photo";
+"No measurements" = "No measurements";
+
+/* ── Drive / Pothole detector ── */
+"Drive" = "Drive";
+"Start Detection" = "Start Detection";
+"Stop Detection" = "Stop Detection";
+"Detection Settings" = "Detection Settings";
+"G-force Threshold" = "G-force Threshold";
+"Min Speed" = "Min Speed";
+"Cooldown" = "Cooldown";
+"Pothole Log" = "Pothole Log";
+"%d events" = "%d events";
+"No potholes detected yet." = "No potholes detected yet.";
+"Idle" = "Idle";
+"Accel" = "Accel";
+"Detected" = "Detected";
+"holes" = "holes";
+"Clear pothole log?" = "Clear pothole log?";
+"Clear Log" = "Clear Log";
+"Stopped" = "Stopped";
+"Accelerometer not available" = "Accelerometer not available";
+"Pothole! %.1f G at %.0f km/h" = "Pothole! %.1f G at %.0f km/h";
+"Armed • %.0f km/h" = "Armed • %.0f km/h";
+"Waiting • %.0f km/h" = "Waiting • %.0f km/h";
+"Pothole Map" = "Pothole Map";
+"Open in Google Maps" = "Open in Google Maps";
+"Share Location" = "Share Location";
+"Filter" = "Filter";
+"Filter by Date" = "Filter by Date";
+"Filter by G-force" = "Filter by G-force";
+"Min G" = "Min G";
+"Max G" = "Max G";
+"From" = "From";
+"To" = "To";
+"%d of %d events" = "%d of %d events";
+"No events in selected range." = "No events in selected range.";
+"Delete %d Events" = "Delete %d Events";
+"Delete %d filtered events?" = "Delete %d filtered events?";
+"Delete" = "Delete";
+"OK" = "OK";
+"Upload Complete" = "Upload Complete";
+"Upload Failed" = "Upload Failed";
+"%d events uploaded to server." = "%d events uploaded to server.";
+
+/* ── Gallery ── */
+"No Photos Yet" = "No Photos Yet";
+"Capture photos with measurements using the Camera tab." = "Capture photos with measurements using the Camera tab.";
+"Photo Details" = "Photo Details";
+"Done" = "Done";
+"Date" = "Date";
+"GPS" = "GPS";
+"Altitude" = "Altitude";
+"Address" = "Address";
+"Location" = "Location";
+"Measurements" = "Measurements";
+"Upload to Server" = "Upload to Server";
+"Retry Upload" = "Retry Upload";
+"Share with Metadata" = "Share with Metadata";
+"Previously uploaded" = "Previously uploaded";

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject private var languageManager = LanguageManager.shared
+
     @State private var testResult: TestResult?
     @State private var isTesting = false
 
@@ -19,24 +21,39 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // ── Language ──────────────────────────────────────────────────
+                Section {
+                    Picker(selection: Binding(
+                        get: { languageManager.currentLanguage },
+                        set: { languageManager.select($0) }
+                    )) {
+                        ForEach(languageManager.supported, id: \.code) { lang in
+                            Text(lang.displayName).tag(lang.code)
+                        }
+                    } label: {
+                        Label(loc("Language"), systemImage: "globe")
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 // ── Server config ─────────────────────────────────────────────
                 Section {
                     VStack(alignment: .leading, spacing: 4) {
-                        Label("Server URL", systemImage: "server.rack")
+                        Label(loc("Server URL"), systemImage: "server.rack")
                             .font(.caption).foregroundColor(.secondary)
                         Text(UploadManager.serverURL)
                             .font(.system(.body, design: .monospaced))
                     }
                     VStack(alignment: .leading, spacing: 4) {
-                        Label("API Key", systemImage: "key.fill")
+                        Label(loc("API Key"), systemImage: "key.fill")
                             .font(.caption).foregroundColor(.secondary)
                         Text(String(repeating: "•", count: UploadManager.apiKey.count))
                             .font(.system(.body, design: .monospaced))
                     }
                 } header: {
-                    Text("Server Configuration")
+                    Text(loc("Server Configuration"))
                 } footer: {
-                    Text("Server URL and API key are built into the app.")
+                    Text(loc("Server URL and API key are built into the app."))
                 }
 
                 // ── Connection test ───────────────────────────────────────────
@@ -45,7 +62,7 @@ struct SettingsView: View {
                         HStack {
                             if isTesting { ProgressView().scaleEffect(0.8) }
                             else { Image(systemName: "antenna.radiowaves.left.and.right") }
-                            Text(isTesting ? "Testing…" : "Test Connection")
+                            Text(loc(isTesting ? "Testing…" : "Test Connection"))
                         }
                     }
                     .disabled(isTesting)
@@ -60,14 +77,14 @@ struct SettingsView: View {
                                 .foregroundColor(.red).font(.footnote)
                         }
                     }
-                } header: { Text("Connection") }
+                } header: { Text(loc("Connection")) }
 
                 // ── Create User ───────────────────────────────────────────────
                 Section {
                     HStack {
                         Image(systemName: "envelope")
                             .foregroundColor(.secondary).frame(width: 20)
-                        TextField("Email", text: $newEmail)
+                        TextField(loc("Email"), text: $newEmail)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
@@ -76,10 +93,10 @@ struct SettingsView: View {
                     HStack {
                         Image(systemName: "lock")
                             .foregroundColor(.secondary).frame(width: 20)
-                        SecureField("Password", text: $newPassword)
+                        SecureField(loc("Password"), text: $newPassword)
                     }
 
-                    Picker("User Type", selection: $newUserType) {
+                    Picker(loc("User Type"), selection: $newUserType) {
                         ForEach(userTypes, id: \.self) { type in
                             Text(type).tag(type)
                         }
@@ -91,7 +108,7 @@ struct SettingsView: View {
                         HStack {
                             if isCreating { ProgressView().scaleEffect(0.8) }
                             else { Image(systemName: "person.badge.plus") }
-                            Text(isCreating ? "Creating…" : "Create User")
+                            Text(loc(isCreating ? "Creating…" : "Create User"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -109,12 +126,12 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Create User")
+                    Text(loc("Create User"))
                 } footer: {
-                    Text("Creates a web login account in the server database.")
+                    Text(loc("Creates a web login account in the server database."))
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle(loc("Settings"))
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -124,7 +141,7 @@ struct SettingsView: View {
         isTesting = true
         testResult = nil
         guard let url = URL(string: "\(UploadManager.serverURL)/api/list.php?limit=1") else {
-            testResult = .failure("Invalid URL"); isTesting = false; return
+            testResult = .failure(NSLocalizedString("Invalid URL", comment: "")); isTesting = false; return
         }
         var req = URLRequest(url: url, timeoutInterval: 10)
         req.setValue(UploadManager.apiKey, forHTTPHeaderField: "X-API-Key")
@@ -137,12 +154,12 @@ struct SettingsView: View {
                         if let data = data,
                            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                            let total = json["total"] as? Int {
-                            testResult = .success("Connected! \(total) photo(s) on server.")
+                            testResult = .success(String(format: NSLocalizedString("Connected! %d photo(s) on server.", comment: ""), total))
                         } else {
-                            testResult = .success("Connected to server ✓")
+                            testResult = .success(NSLocalizedString("Connected to server ✓", comment: ""))
                         }
                     } else {
-                        testResult = .failure("HTTP \(http.statusCode) — check server")
+                        testResult = .failure(String(format: NSLocalizedString("HTTP %d — check server", comment: ""), http.statusCode))
                     }
                 }
             }
@@ -155,7 +172,7 @@ struct SettingsView: View {
         createResult = nil
 
         guard let url = URL(string: "\(UploadManager.serverURL)/api/create_user.php") else {
-            createResult = .failure("Invalid server URL"); isCreating = false; return
+            createResult = .failure(NSLocalizedString("Invalid server URL", comment: "")); isCreating = false; return
         }
 
         var req = URLRequest(url: url, timeoutInterval: 15)
@@ -180,20 +197,20 @@ struct SettingsView: View {
                 }
                 guard let data = data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    createResult = .failure("Invalid server response"); return
+                    createResult = .failure(NSLocalizedString("Invalid server response", comment: "")); return
                 }
                 if let errMsg = json["error"] as? String {
                     createResult = .failure(errMsg)
                 } else if json["ok"] as? Bool == true {
                     let type   = json["user_type"] as? String ?? newUserType
                     let action = json["action"]    as? String ?? "created"
-                    let verb   = action == "updated" ? "Updated" : "Created"
-                    createResult = .success("\(verb) ✓ (\(type))")
+                    let key    = action == "updated" ? "Updated ✓ (%@)" : "Created ✓ (%@)"
+                    createResult = .success(String(format: NSLocalizedString(key, comment: ""), type))
                     newEmail    = ""
                     newPassword = ""
                     newUserType = "user"
                 } else {
-                    createResult = .failure("Unexpected response")
+                    createResult = .failure(NSLocalizedString("Unexpected response", comment: ""))
                 }
             }
         }.resume()

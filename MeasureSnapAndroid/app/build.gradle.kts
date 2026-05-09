@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.measuresnap"
+    namespace = "org.haskovo.hrep"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.measuresnap"
+        applicationId = "org.haskovo.hrep"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

@@ -15,13 +15,13 @@
     <uses-feature android:name="android.hardware.camera" android:required="true" />
 
     <application
-        android:name=".MeasureSnapApp"
+        android:name=".HoleReportApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MeasureSnap"
+        android:theme="@style/Theme.HoleReport"
         android:usesCleartextTraffic="true">
 
         <activity

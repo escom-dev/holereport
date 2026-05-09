@@ -59,10 +59,16 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
-    requireApiKey();
+    $caller = requireCityAdminOrAbove();
     $body = json_decode(file_get_contents('php://input'), true);
     if (!$body || empty($body['slug']) || empty($body['name'])) {
         json_out(['error' => 'slug and name are required'], 400);
+    }
+    // cityadmin can only create districts in their own city
+    $city = $body['city'] ?? '';
+    if ($caller['user_type'] === 'cityadmin') {
+        if (!$caller['city']) json_out(['error' => 'Your account has no city assigned'], 403);
+        $city = $caller['city'];
     }
     $parentId = !empty($body['parent_id']) ? (int)$body['parent_id'] : null;
     $stmt = $pdo->prepare("
@@ -75,7 +81,7 @@ if ($method === 'POST') {
         ':name'       => $body['name'],
         ':name_en'    => $body['name_en']    ?? '',
         ':color'      => $body['color']      ?? '#3b82f6',
-        ':city'       => $body['city']       ?? '',
+        ':city'       => $city,
         ':sort_order' => (int)($body['sort_order'] ?? 0),
         ':coords'     => json_encode($body['coordinates'] ?? []),
         ':parent_id'  => $parentId,
@@ -88,10 +94,22 @@ if ($method === 'POST') {
 }
 
 if ($method === 'PUT') {
-    requireApiKey();
+    $caller = requireCityAdminOrAbove();
     $id   = (int)($_GET['id'] ?? 0);
     $body = json_decode(file_get_contents('php://input'), true);
     if (!$id || !$body) json_out(['error' => 'Bad request'], 400);
+
+    // cityadmin: verify they own this district's city
+    if ($caller['user_type'] === 'cityadmin') {
+        if (!$caller['city']) json_out(['error' => 'Your account has no city assigned'], 403);
+        $existing = $pdo->prepare("SELECT city FROM districts WHERE id = :id");
+        $existing->execute([':id' => $id]);
+        $row = $existing->fetch();
+        if (!$row) json_out(['error' => 'Not found'], 404);
+        if ($row['city'] !== $caller['city']) json_out(['error' => 'Forbidden — district belongs to a different city'], 403);
+        // Prevent changing the city field
+        $body['city'] = $caller['city'];
+    }
 
     $fields = [];
     $params = [':id' => $id];
@@ -123,9 +141,20 @@ if ($method === 'PUT') {
 }
 
 if ($method === 'DELETE') {
-    requireApiKey();
+    $caller = requireCityAdminOrAbove();
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) json_out(['error' => 'Missing id'], 400);
+
+    // cityadmin: verify they own this district's city
+    if ($caller['user_type'] === 'cityadmin') {
+        if (!$caller['city']) json_out(['error' => 'Your account has no city assigned'], 403);
+        $existing = $pdo->prepare("SELECT city FROM districts WHERE id = :id");
+        $existing->execute([':id' => $id]);
+        $row = $existing->fetch();
+        if (!$row) json_out(['error' => 'Not found'], 404);
+        if ($row['city'] !== $caller['city']) json_out(['error' => 'Forbidden — district belongs to a different city'], 403);
+    }
+
     $pdo->prepare("DELETE FROM districts WHERE id = :id")->execute([':id' => $id]);
     json_out(['success' => true]);
 }

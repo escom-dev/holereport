@@ -20,6 +20,11 @@
 		A00B /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B00C /* Resources/Assets.xcassets */; };
 		A00C /* Views/WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00D /* Views/WelcomeView.swift */; };
 		A00D /* Views/MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00E /* Views/MapView.swift */; };
+		A00E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = VARGRP /* Localizable.strings */; };
+		A00F /* Managers/LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00F /* Managers/LanguageManager.swift */; };
+		A010 /* Managers/PotholeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = B010 /* Managers/PotholeDetector.swift */; };
+		A011 /* Views/DriveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B011 /* Views/DriveView.swift */; };
+		A012 /* Views/SafetyWarningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B012 /* Views/SafetyWarningView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +42,12 @@
 		B00C /* Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		B00D /* Views/WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/WelcomeView.swift; sourceTree = "<group>"; };
 		B00E /* Views/MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MapView.swift; sourceTree = "<group>"; };
+		B00F /* Managers/LanguageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Managers/LanguageManager.swift; sourceTree = "<group>"; };
+		B010 /* Managers/PotholeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Managers/PotholeDetector.swift; sourceTree = "<group>"; };
+		B011 /* Views/DriveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/DriveView.swift; sourceTree = "<group>"; };
+		B012 /* Views/SafetyWarningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SafetyWarningView.swift; sourceTree = "<group>"; };
+		C001 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C002 /* bg */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = bg; path = bg.lproj/Localizable.strings; sourceTree = "<group>"; };
 		PROD /* HoleReport.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HoleReport.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -82,8 +93,13 @@
 				B00B /* Views/SettingsView.swift */,
 				B00D /* Views/WelcomeView.swift */,
 				B00E /* Views/MapView.swift */,
+				B00F /* Managers/LanguageManager.swift */,
+				B010 /* Managers/PotholeDetector.swift */,
+				B011 /* Views/DriveView.swift */,
+				B012 /* Views/SafetyWarningView.swift */,
 				B009 /* Resources/Info.plist */,
 				B00C /* Resources/Assets.xcassets */,
+				VARGRP /* Localizable.strings */,
 			);
 			path = HoleReport;
 			sourceTree = "<group>";
@@ -129,6 +145,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				bg,
 				Base,
 			);
 			mainGroup = MAINGRP;
@@ -147,6 +164,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00B /* Resources/Assets.xcassets in Resources */,
+				A00E /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,11 +186,27 @@
 				A009 /* Managers/UploadManager.swift in Sources */,
 				A00A /* Views/SettingsView.swift in Sources */,
 				A00C /* Views/WelcomeView.swift in Sources */,
+				A00F /* Managers/LanguageManager.swift in Sources */,
 				A00D /* Views/MapView.swift in Sources */,
+				A010 /* Managers/PotholeDetector.swift in Sources */,
+				A011 /* Views/DriveView.swift in Sources */,
+				A012 /* Views/SafetyWarningView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		VARGRP /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C001 /* en */,
+				C002 /* bg */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		DBG /* Debug */ = {
@@ -295,19 +329,20 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 5DDAK5D496;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = HoleReport/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hole Report";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.escom.HoleReport;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = bg.escom.holereport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -321,19 +356,20 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 5DDAK5D496;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = HoleReport/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hole Report";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.escom.HoleReport;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = bg.escom.holereport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

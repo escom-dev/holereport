@@ -15,7 +15,7 @@ enum MeasureMode {
 class CameraViewModel: NSObject, ObservableObject {
     @Published var measureMode: MeasureMode = .idle
     @Published var currentMeasurements: [Measurement] = []
-    @Published var statusMessage: String = "Point camera at a surface"
+    @Published var statusMessage: String = NSLocalizedString("Point camera at a surface", comment: "")
     @Published var capturedImage: UIImage?
     @Published var showPhotoPreview: Bool = false
     @Published var lastSavedPhoto: MeasuredPhoto?
@@ -80,7 +80,7 @@ class CameraViewModel: NSObject, ObservableObject {
     func startMeasuring() {
         isMeasuring = true
         measureMode = .placingFirst
-        statusMessage = "Tap a surface to place the first point"
+        statusMessage = NSLocalizedString("Tap a surface to place the first point", comment: "")
     }
     
     func cancelMeasuring() {
@@ -100,7 +100,7 @@ class CameraViewModel: NSObject, ObservableObject {
         startWorldPosition = nil
         isMeasuring = false
         measureMode = .idle
-        statusMessage = "Point camera at a surface"
+        statusMessage = NSLocalizedString("Point camera at a surface", comment: "")
     }
     
     // MARK: - Tap handler
@@ -111,7 +111,7 @@ class CameraViewModel: NSObject, ObservableObject {
         let loc = gesture.location(in: arView)
         let results = arView.raycast(from: loc, allowing: .estimatedPlane, alignment: .any)
         guard let hit = results.first else {
-            statusMessage = "No surface detected — move camera slowly over a surface"
+            statusMessage = NSLocalizedString("No surface detected — move camera slowly over a surface", comment: "")
             return
         }
         
@@ -142,7 +142,7 @@ class CameraViewModel: NSObject, ObservableObject {
         anchorEntities.append(anchor)
         
         measureMode = .placingSecond(start: pos)
-        statusMessage = "Now tap the second point"
+        statusMessage = NSLocalizedString("Now tap the second point", comment: "")
     }
     
     private func placeSecondPoint(start: SIMD3<Float>, end: SIMD3<Float>, transform: simd_float4x4) {
@@ -158,7 +158,7 @@ class CameraViewModel: NSObject, ObservableObject {
         drawLine(from: start, to: end)
         addDistanceLabel(distance: distance, near: (start + end) / 2)
         
-        let label = "Measurement \(currentMeasurements.count + 1)"
+        let label = String(format: NSLocalizedString("Measurement %d", comment: ""), currentMeasurements.count + 1)
         let m = Measurement(label: label, value: distance,
                             startPoint: .zero, endPoint: .zero,
                             startWorld: [start.x, start.y, start.z],
@@ -166,7 +166,7 @@ class CameraViewModel: NSObject, ObservableObject {
         
         DispatchQueue.main.async {
             self.currentMeasurements.append(m)
-            self.statusMessage = "\(m.displayString) — tap again for another, or capture"
+            self.statusMessage = String(format: NSLocalizedString("%@ — tap again for another, or capture", comment: ""), m.displayString)
             self.measureMode = .placingFirst
             self.startAnchor = nil
             self.startWorldPosition = nil
@@ -238,7 +238,7 @@ class CameraViewModel: NSObject, ObservableObject {
         // Convert the AR camera's pixel buffer directly to UIImage.
         // arView.snapshot() renders via Metal and returns black on many devices;
         // ARFrame.capturedImage always contains the real camera data.
-        guard let rawImage = imageFromARFrame(frame) else { return }
+        guard let rawImage = imageFromARFrame(frame)?.fixOrientation() else { return }
 
         let location    = locationManager?.currentLocation
         let cachedAddress = locationManager?.currentAddress
@@ -356,6 +356,20 @@ class CameraViewModel: NSObject, ObservableObject {
                 labelText.draw(at: CGPoint(x: midPt.x + labelOffset, y: midPt.y - labelOffset),
                                withAttributes: attrs)
             }
+        }
+    }
+}
+
+// MARK: - UIImage orientation fix
+
+extension UIImage {
+    /// Redraws the image into a new bitmap context so the underlying CGImage pixels
+    /// are physically in the correct orientation and imageOrientation == .up.
+    func fixOrientation() -> UIImage {
+        guard imageOrientation != .up else { return self }
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            draw(in: CGRect(origin: .zero, size: size))
         }
     }
 }

@@ -16,6 +16,24 @@ function requireSuperAdmin(): void {
     }
 }
 
+/**
+ * Require the caller to be cityadmin or superadmin (via session).
+ * Also accepts the static API key as a fallback (backward-compat).
+ * Returns the current user array; 'city' is null for superadmin/API-key calls.
+ */
+function requireCityAdminOrAbove(): array {
+    if (checkApiKey()) {
+        return ['user_type' => 'superadmin', 'city' => null];
+    }
+    $u = getCurrentUser();
+    if (!$u) json_out(['error' => 'Unauthorized'], 401);
+    $type = $u['user_type'] ?? '';
+    if (!in_array($type, ['cityadmin', 'superadmin'], true)) {
+        json_out(['error' => 'Forbidden — cityadmin or superadmin only'], 403);
+    }
+    return $u;
+}
+
 function cors(): void {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -31,7 +49,7 @@ function json_out($data, int $code = 200): void {
 }
 
 function getApiKey(): string {
-    return getenv('MEASURESNAP_API_KEY') ?: 'api-key-here';
+    return getenv('MEASURESNAP_API_KEY') ?: 'api-key';
 }
 
 function checkApiKey(): bool {
@@ -60,7 +78,7 @@ function db(): PDO {
     $port = getenv('DB_PORT') ?: '5432';
     $name = getenv('DB_NAME') ?: 'holereport';
     $user = getenv('DB_USER') ?: 'holereport';
-    $pass = getenv('DB_PASS') ?: 'db-password-here';
+    $pass = getenv('DB_PASS') ?: 'db-pass';
     try {
         $pdo = new PDO(
             "pgsql:host={$host};port={$port};dbname={$name}",

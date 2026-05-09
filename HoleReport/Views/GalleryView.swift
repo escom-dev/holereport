@@ -1,19 +1,22 @@
 import SwiftUI
 import UIKit
+import PhotosUI
+import ImageIO
 
 struct GalleryView: View {
     @EnvironmentObject var photoStore: PhotoStore
     @EnvironmentObject var uploadManager: UploadManager
     @State private var selectedPhoto: MeasuredPhoto?
+    @State private var showPicker = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if photoStore.photos.isEmpty {
                     ContentUnavailableView(
-                        "No Photos Yet",
+                        loc("No Photos Yet"),
                         systemImage: "camera.badge.clock",
-                        description: Text("Capture photos with measurements using the Camera tab.")
+                        description: Text(loc("Capture photos with measurements using the Camera tab."))
                     )
                 } else {
                     ScrollView {
@@ -28,11 +31,30 @@ struct GalleryView: View {
                     }
                 }
             }
-            .navigationTitle("Gallery")
+            .navigationTitle(loc("Gallery"))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showPicker = true } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
             .sheet(item: $selectedPhoto) { photo in
                 PhotoDetailView(photo: photo)
                     .environmentObject(photoStore)
                     .environmentObject(uploadManager)
+            }
+            .sheet(isPresented: $showPicker) {
+                LibraryPicker { image, date, lat, lon, alt in
+                    let photo = MeasuredPhoto(
+                        imageFileName: "photo_\(UUID().uuidString).jpg",
+                        timestamp: date ?? Date(),
+                        latitude: lat,
+                        longitude: lon,
+                        altitude: alt
+                    )
+                    photoStore.save(image: image, photo: photo)
+                }
             }
         }
     }
@@ -164,13 +186,16 @@ struct PhotoDetailView: View {
     @EnvironmentObject var photoStore: PhotoStore
     @EnvironmentObject var uploadManager: UploadManager
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var languageManager = LanguageManager.shared
 
     @State private var shareItems: [Any]?
     @State private var showShareSheet = false
     @State private var uploadState: UploadState = .idle
+    @State private var categories: [UploadManager.Category] = []
+    @State private var selectedCategoryId: Int?
 
     private var initialUploadState: UploadState {
-        photo.isUploaded ? .success("Previously uploaded") : .idle
+        photo.isUploaded ? .success(NSLocalizedString("Previously uploaded", comment: "")) : .idle
     }
 
     enum UploadState { case idle, uploading, success(String), failure(String) }
@@ -194,17 +219,17 @@ struct PhotoDetailView: View {
                     }
 
                     GroupBox {
-                        InfoRow(label: "Date",     value: dateFormatter.string(from: photo.timestamp), icon: "calendar")
+                        InfoRow(label: loc("Date"),     value: dateFormatter.string(from: photo.timestamp), icon: "calendar")
                         Divider()
-                        InfoRow(label: "GPS",      value: photo.coordinateString, icon: "location.fill")
+                        InfoRow(label: loc("GPS"),      value: photo.coordinateString, icon: "location.fill")
                         Divider()
-                        InfoRow(label: "Altitude", value: photo.altitudeString,   icon: "arrow.up.to.line")
+                        InfoRow(label: loc("Altitude"), value: photo.altitudeString,   icon: "arrow.up.to.line")
                         if let address = photo.locationAddress {
                             Divider()
-                            InfoRow(label: "Address", value: address, icon: "mappin")
+                            InfoRow(label: loc("Address"), value: address, icon: "mappin")
                         }
                     } label: {
-                        Label("Location", systemImage: "map.fill")
+                        Label(loc("Location"), systemImage: "map.fill")
                     }
 
                     if !photo.measurements.isEmpty {
@@ -214,7 +239,34 @@ struct PhotoDetailView: View {
                                 InfoRow(label: m.label, value: m.displayString, icon: "ruler")
                             }
                         } label: {
-                            Label("Measurements", systemImage: "ruler")
+                            Label(loc("Measurements"), systemImage: "ruler")
+                        }
+                    }
+
+                    // ── Category picker ───────────────────────────────────────
+                    if !categories.isEmpty {
+                        GroupBox {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    CategoryChip(label: loc("None"), color: .gray, isSelected: selectedCategoryId == nil) {
+                                        selectedCategoryId = nil
+                                        photoStore.updateCategory(photo: photo, categoryId: nil, categoryName: nil)
+                                    }
+                                    ForEach(categories) { cat in
+                                        CategoryChip(
+                                            label: languageManager.currentLanguage == "bg" ? cat.name : (cat.nameEn.isEmpty ? cat.name : cat.nameEn),
+                                            color: Color(hex: cat.color) ?? .blue,
+                                            isSelected: selectedCategoryId == cat.id
+                                        ) {
+                                            selectedCategoryId = cat.id
+                                            photoStore.updateCategory(photo: photo, categoryId: cat.id, categoryName: cat.name)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        } label: {
+                            Label(loc("Category"), systemImage: "tag.fill")
                         }
                     }
 
@@ -255,18 +307,18 @@ struct PhotoDetailView: View {
 
                     // ── Share button ──────────────────────────────────────────
                     Button { prepareAndShare() } label: {
-                        Label("Share with Metadata", systemImage: "square.and.arrow.up")
+                        Label(loc("Share with Metadata"), systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
                 }
                 .padding()
             }
-            .navigationTitle("Photo Details")
+            .navigationTitle(loc("Photo Details"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button(loc("Done")) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(role: .destructive) {
@@ -278,16 +330,22 @@ struct PhotoDetailView: View {
                 }
             }
             .background(ShareSheetPresenter(items: $shareItems, isPresented: $showShareSheet))
-            .onAppear { uploadState = initialUploadState }
+            .onAppear {
+                uploadState = initialUploadState
+                selectedCategoryId = photo.categoryId
+                uploadManager.fetchCategories { cats in
+                    categories = cats
+                }
+            }
         }
     }
 
     private var uploadLabel: String {
         switch uploadState {
-        case .uploading:    return "Uploading…"
-        case .success:      return "Uploaded ✓"
-        case .failure:      return "Retry Upload"
-        default:            return "Upload to Server"
+        case .uploading:    return NSLocalizedString("Uploading…", comment: "")
+        case .success:      return NSLocalizedString("Uploaded ✓", comment: "")
+        case .failure:      return NSLocalizedString("Retry Upload", comment: "")
+        default:            return NSLocalizedString("Upload to Server", comment: "")
         }
     }
 
@@ -310,7 +368,7 @@ struct PhotoDetailView: View {
     private func uploadPhoto() {
         guard let image = photoStore.loadImage(fileName: photo.imageFileName) else { return }
         uploadState = .uploading
-        uploadManager.upload(image: image, photo: photo) { result in
+        uploadManager.upload(image: image, photo: photo, categoryId: selectedCategoryId) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let url):
@@ -387,6 +445,108 @@ class ShareHostVC: UIViewController {
         }
         present(ac, animated: true)
     }
+}
+
+// MARK: - Photos Library Picker
+
+struct LibraryPicker: UIViewControllerRepresentable {
+    /// Called on the main thread for each selected photo.
+    let onImport: (UIImage, _ date: Date?, _ lat: Double?, _ lon: Double?, _ alt: Double?) -> Void
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = 0          // unlimited multi-select
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ vc: PHPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let parent: LibraryPicker
+
+        init(_ parent: LibraryPicker) { self.parent = parent }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            // Process one photo at a time so only one full-res buffer is in memory at once.
+            processNext(results: results, index: 0)
+        }
+
+        private func processNext(results: [PHPickerResult], index: Int) {
+            guard index < results.count else { return }
+            results[index].itemProvider.loadDataRepresentation(forTypeIdentifier: "public.image") { [weak self] data, _ in
+                guard let self else { return }
+                if let data {
+                    let (date, lat, lon, alt) = exifMetadata(from: data)
+                    // Downsample at decode time — never loads full-res pixels into RAM.
+                    let image = downsampledImage(from: data, maxPixelSize: 2048)
+                    DispatchQueue.main.async {
+                        if let image { self.parent.onImport(image, date, lat, lon, alt) }
+                        self.processNext(results: results, index: index + 1)
+                    }
+                } else {
+                    DispatchQueue.main.async { self.processNext(results: results, index: index + 1) }
+                }
+            }
+        }
+    }
+}
+
+/// Decode a downsampled UIImage from raw data without ever loading the full-resolution pixels.
+/// `kCGImageSourceCreateThumbnailWithTransform` applies EXIF orientation automatically.
+private func downsampledImage(from data: Data, maxPixelSize: Int) -> UIImage? {
+    let sourceOptions: [CFString: Any] = [kCGImageSourceShouldCache: false]
+    guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions as CFDictionary) else { return nil }
+    let thumbOptions: [CFString: Any] = [
+        kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceCreateThumbnailWithTransform: true,   // respects EXIF orientation
+        kCGImageSourceShouldCacheImmediately: false
+    ]
+    guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbOptions as CFDictionary) else { return nil }
+    return UIImage(cgImage: cgImage)
+}
+
+/// Extract date and GPS coordinates from raw image data using ImageIO.
+private func exifMetadata(from data: Data) -> (date: Date?, lat: Double?, lon: Double?, alt: Double?) {
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+          let props  = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+    else { return (nil, nil, nil, nil) }
+
+    // ── GPS ───────────────────────────────────────────────────────────────────
+    var lat: Double? = nil
+    var lon: Double? = nil
+    var alt: Double? = nil
+    if let gps = props[kCGImagePropertyGPSDictionary] as? [CFString: Any] {
+        if let v = gps[kCGImagePropertyGPSLatitude] as? Double {
+            lat = (gps[kCGImagePropertyGPSLatitudeRef] as? String) == "S" ? -v : v
+        }
+        if let v = gps[kCGImagePropertyGPSLongitude] as? Double {
+            lon = (gps[kCGImagePropertyGPSLongitudeRef] as? String) == "W" ? -v : v
+        }
+        alt = gps[kCGImagePropertyGPSAltitude] as? Double
+    }
+
+    // ── Date (EXIF → TIFF fallback) ───────────────────────────────────────────
+    let df = DateFormatter()
+    df.dateFormat = "yyyy:MM:dd HH:mm:ss"
+    var date: Date? = nil
+    if let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any],
+       let s    = exif[kCGImagePropertyExifDateTimeOriginal] as? String {
+        date = df.date(from: s)
+    }
+    if date == nil,
+       let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any],
+       let s    = tiff[kCGImagePropertyTIFFDateTime] as? String {
+        date = df.date(from: s)
+    }
+
+    return (date, lat, lon, alt)
 }
 
 // MARK: - InfoRow

@@ -1,0 +1,20 @@
+{
+    "filename": "photo_a4f4ad38-dbe1-4a4b-9e0c-9b0f554b671d.jpg",
+    "original_name": "photo_23859515-AF1F-4737-BF6A-83E75D938EFC.jpg",
+    "size_bytes": 836157,
+    "mime_type": "image\/jpeg",
+    "uploaded_at": "2026-02-24T15:03:47+00:00",
+    "latitude": 41.93222928833116,
+    "longitude": 25.54874525839229,
+    "altitude": 186.00650033023982,
+    "address": "Епископ Софроний 12, Khaskovo, Bulgaria",
+    "photo_date": "2026-02-24T15:03:44Z",
+    "measurements": [
+        {
+            "label": "Measurement 1",
+            "value_m": 0.8068763613700867,
+            "display": "80.7 cm"
+        }
+    ],
+    "device_note": "iPhone MeasureSnap App"
+}

@@ -40,8 +40,8 @@ info "Enabling Apache modules…"
 a2enmod rewrite headers expires php* >> "$LOG_FILE" 2>&1
 
 # ── 3. Generate secrets ───────────────────────────────────────────────────────
-API_KEY='api-key-here'
-DB_PASS='db-password-here'
+API_KEY='api-key'
+DB_PASS='db-pass'
 info "Generated API key"
 info "Generated database password"
 

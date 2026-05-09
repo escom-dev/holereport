@@ -12,7 +12,7 @@ if (!$mail || !$pass) json_out(['error' => 'Email and password required'], 400);
 
 $pdo  = db();
 $stmt = $pdo->prepare(
-    "SELECT id, user_type, user_mail, user_password FROM users WHERE user_mail = :mail LIMIT 1"
+    "SELECT id, user_type, user_mail, user_password, city FROM users WHERE user_mail = :mail LIMIT 1"
 );
 $stmt->execute([':mail' => $mail]);
 $row = $stmt->fetch();
@@ -34,6 +34,7 @@ $_SESSION['auth_user'] = [
     'id'        => (int)$row['id'],
     'user_type' => $row['user_type'],
     'user_mail' => $row['user_mail'],
+    'city'      => $row['city'] ?? null,
 ];
 
 json_out(['user' => $_SESSION['auth_user']]);

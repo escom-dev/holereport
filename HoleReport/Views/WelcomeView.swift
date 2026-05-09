@@ -43,11 +43,11 @@ struct WelcomeView: View {
 
                 // Title
                 VStack(spacing: 8) {
-                    Text("Hole Report")
+                    Text(loc("Hole Report"))
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
 
-                    Text("AR Measurements + GPS Photo Log")
+                    Text(loc("AR Measurements + GPS Photo Log"))
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -57,14 +57,14 @@ struct WelcomeView: View {
                 // Feature bullets
                 VStack(alignment: .leading, spacing: 14) {
                     FeatureRow(icon: "ruler",
-                               title: "AR Measurements",
-                               detail: "Measure real-world distances with your camera")
+                               title: loc("AR Measurements"),
+                               detail: loc("Measure real-world distances with your camera"))
                     FeatureRow(icon: "location.fill",
-                               title: "GPS Tagging",
-                               detail: "Every photo stamped with exact coordinates")
+                               title: loc("GPS Tagging"),
+                               detail: loc("Every photo stamped with exact coordinates"))
                     FeatureRow(icon: "arrow.up.to.line",
-                               title: "Server Upload",
-                               detail: "Sync photos to your Hole Report server")
+                               title: loc("Server Upload"),
+                               detail: loc("Sync photos to your Hole Report server"))
                 }
                 .opacity(textOpacity)
                 .padding(.horizontal, 40)
@@ -75,7 +75,7 @@ struct WelcomeView: View {
                 // Get started button
                 Button(action: onContinue) {
                     HStack(spacing: 10) {
-                        Text("Get Started")
+                        Text(loc("Get Started"))
                             .font(.headline)
                         Image(systemName: "arrow.right")
                             .font(.subheadline.weight(.semibold))

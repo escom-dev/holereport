@@ -57,20 +57,4 @@
     <path
         android:fillColor="#f5b800"
         android:pathData="M74,42 m-5,0 a5,5 0,1,0 10,0 a5,5 0,1,0 -10,0" />
-
-    <!-- HR badge background (blue rounded rect, bottom-right) -->
-    <path
-        android:fillColor="#3b7fe0"
-        android:pathData="M68,74 H80 C81.7,74 83,75.3 83,77 V85 C83,86.7 81.7,88 80,88 H68 C66.3,88 65,86.7 65,85 V77 C65,75.3 66.3,74 68,74 Z" />
-
-    <!-- "H" letter -->
-    <path
-        android:fillColor="#ffffff"
-        android:pathData="M68.5,77 L68.5,85 M68.5,81 L72.5,81 M72.5,77 L72.5,85" />
-
-    <!-- "R" letter -->
-    <path
-        android:fillColor="#ffffff"
-        android:pathData="M74,77 L74,85 M74,77 L77,77 C78.1,77 79,77.9 79,79 C79,80.1 78.1,81 77,81 L74,81 M76,81 L79,85" />
-
 </vector>

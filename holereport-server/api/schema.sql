@@ -104,12 +104,44 @@ $$;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_mail ON users(user_mail) WHERE user_mail IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);
 
+-- Add city column to users (for cityadmin city scope)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'city'
+  ) THEN
+    ALTER TABLE users ADD COLUMN city VARCHAR(255) DEFAULT NULL;
+  END IF;
+END;
+$$;
+
 -- Indexes on existing photos table (safe to re-run)
 CREATE INDEX IF NOT EXISTS idx_photos_uploaded_at ON photos(uploaded_at DESC);
 CREATE INDEX IF NOT EXISTS idx_photos_user_id     ON photos(user_id);
 CREATE INDEX IF NOT EXISTS idx_photos_status      ON photos(status);
 CREATE INDEX IF NOT EXISTS idx_photos_coords      ON photos(latitude, longitude)
   WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+
+-- Pothole events detected by accelerometer while driving
+CREATE TABLE IF NOT EXISTS potholes (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  device_id   VARCHAR(36),
+  detected_at TIMESTAMPTZ NOT NULL,
+  latitude    DOUBLE PRECISION NOT NULL,
+  longitude   DOUBLE PRECISION NOT NULL,
+  speed_kmh   DOUBLE PRECISION,
+  peak_g      DOUBLE PRECISION,
+  accuracy_m  DOUBLE PRECISION,
+  uploaded_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (device_id, detected_at, latitude, longitude)
+);
+
+CREATE INDEX IF NOT EXISTS idx_potholes_detected  ON potholes(detected_at DESC);
+CREATE INDEX IF NOT EXISTS idx_potholes_coords    ON potholes(latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_potholes_device    ON potholes(device_id);
+CREATE INDEX IF NOT EXISTS idx_potholes_user      ON potholes(user_id);
 
 -- ============================================================
 -- Reference — existing tables (already in DB, do not recreate)

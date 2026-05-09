@@ -1,154 +1,206 @@
-# MeasureSnap 📸📐📍
+# Hole Report
 
-An iPhone app that captures photos with real-world AR dimension measurements and GPS coordinates embedded in each shot.
+An iPhone app that combines AR measurements, GPS photo logging, and automatic pothole detection while driving.
 
 ---
 
 ## Features
 
+### 📸 Camera & AR Measurements
 | Feature | Details |
 |---|---|
-| 📸 **AR Camera** | Live ARKit camera feed with plane detection |
-| 📐 **Dimension Measuring** | Tap two points in 3D space → get real-world distance in cm/m |
-| 📍 **GPS Tagging** | Latitude, longitude, altitude with accuracy indicator |
-| 🗺 **Reverse Geocoding** | Human-readable address from GPS coords |
-| 🖼 **Gallery** | Browse all captured photos with metadata |
-| 📤 **Share** | Export photo + measurements + GPS as image + text |
-| 🗑 **Delete** | Remove photos from the gallery |
+| **AR Camera** | Live ARKit camera feed with plane detection |
+| **Dimension Measuring** | Tap two points in 3D space → real-world distance in cm/m |
+| **GPS Tagging** | Latitude, longitude, altitude stamped on every photo |
+| **Reverse Geocoding** | Human-readable street address from GPS coordinates |
+| **Photo Categories** | Tag photos by category before uploading |
+| **Server Upload** | Upload photos + measurements to the Hole Report server |
+
+### 🖼 Gallery
+| Feature | Details |
+|---|---|
+| **Browse** | All captured photos with metadata |
+| **Full Detail** | GPS, altitude, address, measurements per photo |
+| **Share** | Export photo + metadata as image |
+| **Upload / Retry** | Upload individual photos to the server |
+
+### 🗺 Map
+| Feature | Details |
+|---|---|
+| **Photo Map** | All geotagged photos as pins on a map |
+| **Clustering** | Multiple photos at the same location grouped into one pin |
+| **Detail Card** | Tap a pin to preview the photo and open its detail view |
+| **Fit All** | One-tap button to zoom map to show all markers |
+
+### 🚗 Drive — Pothole Detector
+| Feature | Details |
+|---|---|
+| **Automatic Detection** | Uses accelerometer (`CMDeviceMotion`) at 100 Hz to detect road impacts |
+| **Speed Gating** | Only arms when GPS speed exceeds a configurable threshold (default 10 km/h) |
+| **G-force Threshold** | Configurable impact sensitivity (default 1.5 G user acceleration) |
+| **Cooldown** | Prevents logging the same hole multiple times (default 1 s) |
+| **Live Gauges** | Real-time speed, G-force, and detected hole count |
+| **CSV Log** | Events saved to `Documents/pothole_log.csv` — timestamp, GPS, speed, peak G |
+| **Date Filter** | Filter the log by From / To date and time |
+| **G-force Filter** | Filter the log by Min / Max G-force range |
+| **Delete Filtered** | Remove only the filtered events from the log |
+| **Pothole Map** | View all detected potholes as colour-coded pins (yellow / orange / red by severity) |
+| **Upload to Server** | Send detected events (or filtered subset) to the server API |
+| **Export CSV** | Share the log file via the iOS share sheet |
+| **Google Maps** | Long-press any event row → Open in Google Maps or share the location URL |
+
+### 🌐 Localisation
+- **English** and **Bulgarian** (Български)
+- In-app language switcher in Settings — no app restart required
 
 ---
 
 ## Requirements
 
 - **iPhone** with A12 chip or newer (iPhone XS / XR and later)
-- **iOS 16.0+**
-- **ARKit support** (requires physical device — does NOT run on Simulator)
+- **iOS 17.0+**
+- **ARKit support** — physical device required, Simulator will not work
 - **Xcode 15+**
 
 ---
 
-## Setup Instructions
+## Setup
 
 ### 1. Open in Xcode
 ```bash
-open MeasureSnap.xcodeproj
+open HoleReport.xcodeproj
 ```
 
-### 2. Set your Team
-- Select the `MeasureSnap` target
-- Go to **Signing & Capabilities**
+### 2. Set Signing Team
+- Select the `HoleReport` target → **Signing & Capabilities**
 - Set your Apple Developer **Team**
-- Xcode will auto-manage provisioning
 
-### 3. Update Bundle ID
-In `project.pbxproj` or Target Settings, change:
-```
-com.yourcompany.MeasureSnap
-```
-to your own unique bundle identifier.
-
-### 4. Connect iPhone & Build
-- Select your iPhone as the run destination
-- Press **⌘R** to build and run
+### 3. Build & Run
+- Select a connected iPhone as the run destination
+- **⌘R** to build and run
 
 ---
 
 ## How to Use
 
-### Taking a Photo
-1. Open the app — camera starts automatically
-2. The **GPS bar** at the top shows your current coordinates
-3. Tap the **camera button** to capture a photo
+### Taking a Measured Photo
+1. Open the **Camera** tab — AR camera starts automatically
+2. Tap **Measure** to enter measurement mode
+3. Point at a surface and tap two points to measure a distance
+4. Tap the capture button to save the photo with all measurements embedded
+5. Choose a category and tap **Upload** to send to the server
 
-### Measuring Dimensions
-1. Tap **Measure** button (ruler icon)
-2. Point camera at a flat surface — ARKit detects planes
-3. **Tap first point** on the surface
-4. **Tap second point** — the distance appears in real-time
-5. Add more measurements before capturing
-6. Tap the **camera button** to save photo with all measurements
-7. Tap **Clear** to remove all measurement markers
-
-### Viewing Photos
-1. Switch to the **Gallery** tab
-2. Tap any photo to see full details:
-   - GPS coordinates and altitude
-   - Street address (reverse geocoded)
-   - All measurements taken
-3. Tap **Share** to export photo + metadata
+### Detecting Potholes While Driving
+1. Open the **Drive** tab
+2. Adjust the G-force threshold, minimum speed, and cooldown if needed
+3. Tap **Start Detection** — keep the phone mounted in the car
+4. Drive normally — potholes are logged automatically when an impact exceeds the threshold at speed
+5. Tap **Stop Detection** when done
+6. Use the **Filter** section to narrow the log by date range or G-force severity
+7. Tap the **map icon** to see all detected potholes on a map
+8. Tap the **cloud icon** to upload the (filtered) events to the server
+9. Long-press any event row to **Open in Google Maps** or **Share Location**
 
 ---
 
 ## Project Structure
 
 ```
-MeasureSnap/
-├── MeasureSnapApp.swift          # App entry point
-├── ContentView.swift              # Tab navigation
+HoleReport/
+├── HoleReportApp.swift
+├── ContentView.swift               # Tab navigation (Camera / Gallery / Map / Drive / Settings)
 ├── Models/
-│   └── MeasuredPhoto.swift        # Photo + Measurement data models
+│   └── MeasuredPhoto.swift         # Photo + Measurement data models
 ├── Managers/
-│   ├── LocationManager.swift      # CoreLocation GPS manager
-│   ├── PhotoStore.swift           # Photo persistence (JSON + images)
-│   └── UploadManager.swift        # Server upload handler (multipart form)
+│   ├── LocationManager.swift       # CoreLocation GPS + reverse geocoding
+│   ├── PhotoStore.swift            # Photo persistence (JSON + JPEG files)
+│   ├── UploadManager.swift         # Photo upload — multipart/form-data POST
+│   ├── PotholeDetector.swift       # Accelerometer-based pothole detection + CSV log
+│   └── LanguageManager.swift       # In-app language switching (EN / BG)
 ├── ViewModels/
-│   └── CameraViewModel.swift      # ARKit logic, measurement engine
+│   └── CameraViewModel.swift       # ARKit plane detection + measurement engine
 ├── Views/
-│   ├── CameraView.swift           # AR camera + HUD + controls
-│   └── GalleryView.swift          # Photo gallery + detail view
+│   ├── WelcomeView.swift           # Onboarding screen
+│   ├── CameraView.swift            # AR camera + HUD + controls
+│   ├── GalleryView.swift           # Photo gallery + detail view
+│   ├── MapView.swift               # Clustered photo map
+│   ├── DriveView.swift             # Pothole detector UI + pothole map
+│   └── SettingsView.swift          # Server config + language picker
 └── Resources/
-    └── Info.plist                 # Permissions + configuration
+    ├── Info.plist
+    ├── Assets.xcassets
+    ├── en.lproj/Localizable.strings
+    └── bg.lproj/Localizable.strings
 ```
+
+---
+
+## Server API
+
+The app connects to a PHP / PostgreSQL backend at the configured server URL.
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/upload.php` | POST | Upload a photo with GPS + measurements |
+| `/api/upload_potholes.php` | POST | Upload pothole events (JSON array) |
+| `/api/list.php` | GET | List uploaded photos |
+| `/api/categories.php` | GET | Fetch photo categories |
+| `/api/create_user.php` | POST | Create a web login account |
+| `/api/status.php` | GET | Server health check |
+
+### Pothole upload payload
+```json
+{
+  "device_id": "UUID",
+  "events": [
+    {
+      "timestamp": "2026-04-28T10:23:45Z",
+      "latitude": 41.99812,
+      "longitude": 25.48763,
+      "speed_kmh": 47.3,
+      "peak_g": 2.14,
+      "accuracy_m": 4.2
+    }
+  ]
+}
+```
+Response: `{ "inserted": 1, "skipped": 0, "total_sent": 1 }`
+
+Duplicate events (same device + timestamp + coordinates) are silently ignored on re-upload.
 
 ---
 
 ## Permissions Required
 
-The app requests these permissions on first launch:
-
 | Permission | Purpose |
 |---|---|
 | **Camera** | AR camera feed and photo capture |
-| **Location (When In Use)** | GPS tagging of photos |
+| **Location (When In Use)** | GPS tagging of photos and speed reading for pothole detection |
 | **Photo Library Add** | Saving photos to Camera Roll (optional) |
 
 ---
 
-## Technical Details
+## Technical Stack
 
-- **ARKit** + **RealityKit** for AR plane detection and 3D raycasting
-- **CoreLocation** with `kCLLocationAccuracyBestForNavigation` for precise GPS
-- **CLGeocoder** for reverse geocoding addresses
-- **SwiftUI** for all UI, with `UIViewRepresentable` wrapping ARView
-- **Codable** models persisted as JSON in the app's Documents directory
-- **UIActivityViewController** for sharing
-
----
-
-## Measurement Accuracy
-
-Measurement accuracy depends on:
-- Surface detection quality (flat, textured surfaces work best)
-- Lighting conditions (brighter = more accurate plane detection)
-- Distance to measured object (0.3m–5m optimal range)
-- Device motion stability (hold steady when placing points)
-
-Typical accuracy: **±1–3 cm** in good conditions.
+| Component | Technology |
+|---|---|
+| UI | SwiftUI (iOS 17+) |
+| AR & Measurement | ARKit + RealityKit |
+| Pothole Detection | CoreMotion `CMDeviceMotion` |
+| Maps | MapKit (new `Map` / `MapCameraPosition` API) |
+| GPS | CoreLocation |
+| Persistence | JSON + JPEG in Documents directory; CSV for pothole log |
+| Localisation | `.lproj` string bundles + runtime bundle switching |
+| Server | PHP 8 + PostgreSQL on Apache |
 
 ---
 
-## Troubleshooting
+## Pothole Detection — How It Works
 
-**"No surface detected"**
-→ Move camera slowly over a flat, textured surface. Avoid plain white walls.
+1. `CMDeviceMotion` samples `userAcceleration` at **100 Hz** (gravity already removed by CoreMotion)
+2. The total acceleration magnitude `√(x²+y²+z²)` is computed each sample
+3. If magnitude ≥ **G threshold** AND GPS speed ≥ **min speed** AND cooldown has elapsed → event is recorded
+4. Each event stores: timestamp, GPS coordinates, speed, peak G-force, GPS accuracy
+5. Events are appended to `pothole_log.csv` immediately and kept in memory for display
 
-**GPS showing "Acquiring..."**
-→ Ensure Location permission is granted in Settings → Privacy → Location Services → MeasureSnap.
-
-**Build fails with "ARKit not available"**
-→ Must build to a physical iPhone, not the Simulator.
-
----
-
-## License
-MIT — free to use and modify.
+Colour coding on the map: **yellow** < 2 G · **orange** 2–3 G · **red** ≥ 3 G

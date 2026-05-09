@@ -43,6 +43,13 @@ class PhotoStore: ObservableObject {
         saveMetadata()
     }
 
+    func updateCategory(photo: MeasuredPhoto, categoryId: Int?, categoryName: String?) {
+        guard let index = photos.firstIndex(where: { $0.id == photo.id }) else { return }
+        photos[index].categoryId = categoryId
+        photos[index].categoryName = categoryName
+        saveMetadata()
+    }
+
     func delete(photo: MeasuredPhoto) {
         let imageURL = imagesDirectory.appendingPathComponent(photo.imageFileName)
         try? FileManager.default.removeItem(at: imageURL)

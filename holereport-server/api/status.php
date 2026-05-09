@@ -4,6 +4,12 @@ cors();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') json_out(['error' => 'Method not allowed'], 405);
 
+$u    = getCurrentUser();
+$type = $u['user_type'] ?? '';
+if (!in_array($type, ['admin', 'cityadmin', 'superadmin'], true)) {
+    json_out(['error' => 'Forbidden — admin or above required'], 403);
+}
+
 $id     = preg_replace('/[^a-f0-9\-]/', '', $_POST['id']     ?? '');
 $status = preg_replace('/[^a-z_]/',     '', $_POST['status'] ?? '');
 

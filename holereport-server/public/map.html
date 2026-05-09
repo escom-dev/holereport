@@ -191,6 +191,45 @@ body {
 }
 .lang-btn:hover { border-color: #3b82f6; color: #60a5fa; }
 
+/* ── Login button ── */
+.login-btn {
+  padding: 5px 12px; background: #2d3148; border: 1px solid #2e3250;
+  border-radius: 6px; color: #e2e8f0; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: border-color .2s; white-space: nowrap;
+}
+.login-btn:hover  { border-color: #3b82f6; color: #60a5fa; }
+.login-btn.logged-in { border-color: #22c55e44; color: #86efac; }
+
+/* ── Login modal ── */
+.login-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.login-overlay.open { display: flex; }
+.login-box {
+  background: #1a1d27; border: 1px solid #2d3148;
+  border-radius: 12px; padding: 28px; width: 100%; max-width: 340px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.login-box h3 { font-size: 17px; font-weight: 700; text-align: center; color: #e2e8f0; }
+.login-box label { font-size: 12px; color: #64748b; display: block; margin-bottom: 4px; }
+.login-box input {
+  width: 100%; padding: 9px 11px; background: #12151f;
+  border: 1px solid #2d3148; border-radius: 7px;
+  color: #e2e8f0; font-size: 14px;
+}
+.login-box input:focus { outline: none; border-color: #3b82f6; }
+.login-submit {
+  width: 100%; padding: 10px; background: #2563eb; border: none;
+  border-radius: 7px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.login-submit:hover { opacity: .88; }
+.login-err  { font-size: 13px; color: #f87171; text-align: center; min-height: 16px; }
+.login-cancel { width: 100%; padding: 8px; background: #2d3148; border: none;
+  border-radius: 7px; color: #e2e8f0; font-size: 13px; cursor: pointer; }
+.login-cancel:hover { background: #3d4460; }
+
 /* ── Filter bar ── */
 .filter-bar {
   background: #1a1d27; border-bottom: 1px solid #2d3148;
@@ -230,6 +269,7 @@ body {
   <a href="/map.html" class="active"><span data-i18n="nav.map">Map</span></a>
   <div class="topbar-right">
     <span id="topStats">Loading…</span>
+    <button id="loginBtn" class="login-btn" onclick="handleLoginBtn()">👤 Sign In</button>
     <button id="langBtn" class="topbar-btn lang-btn" onclick="setLang(currentLang==='en'?'bg':'en')">BG</button>
     <button id="btnHeat" class="topbar-btn" onclick="toggleHeatmap()">🔥 Heatmap</button>
     <button id="btnTempZone" class="topbar-btn" onclick="toggleTempZone()">📦 Temp Zone</button>
@@ -345,8 +385,27 @@ body {
   </div>
 </div>
 
+<!-- Login Modal -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h3>🔐 Sign In</h3>
+    <div>
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="user@example.com" autocomplete="email">
+    </div>
+    <div>
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') submitLogin()">
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-submit" onclick="submitLogin()">Sign In</button>
+    <button class="login-cancel" onclick="closeLogin()">Cancel</button>
+  </div>
+</div>
+
 <script>
-const API_KEY = 'api-key-here';
+const API_KEY = 'api-key';
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
 const TRANS = {
@@ -439,6 +498,105 @@ function setLang(lang) {
   renderMarkers(activeId);
 }
 
+// ── Auth ──────────────────────────────────────────────────────────────────────
+let currentUser = null;
+
+function canEdit() {
+  return currentUser && (currentUser.user_type === 'cityadmin' || currentUser.user_type === 'superadmin');
+}
+
+function canEditDistrict(d) {
+  if (!currentUser) return false;
+  if (currentUser.user_type === 'superadmin') return true;
+  if (currentUser.user_type === 'cityadmin') {
+    return currentUser.city && d.city && currentUser.city === d.city;
+  }
+  return false;
+}
+
+async function initAuth() {
+  // Restore instantly from cache so UI doesn't flash "Sign In"
+  try { currentUser = JSON.parse(localStorage.getItem('auth_user')) || null; } catch(e) {}
+  updateAuthUI();
+  // Verify with server and sync
+  try {
+    const r = await fetch('/api/me.php');
+    const d = await r.json();
+    currentUser = d.user || null;
+    if (currentUser) localStorage.setItem('auth_user', JSON.stringify(currentUser));
+    else localStorage.removeItem('auth_user');
+  } catch(e) { /* keep cached state on network error */ }
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const btn = document.getElementById('loginBtn');
+  if (currentUser) {
+    btn.classList.add('logged-in');
+    const cityLabel = currentUser.city ? ' · ' + currentUser.city : '';
+    btn.textContent = '👤 ' + (currentUser.user_mail || currentUser.user_type) + cityLabel;
+  } else {
+    btn.classList.remove('logged-in');
+    btn.textContent = '👤 Sign In';
+  }
+  // Show/hide Draw New button
+  const btnDraw = document.getElementById('btnDraw');
+  if (btnDraw) btnDraw.style.display = canEdit() ? '' : 'none';
+  // Refresh district list to show/hide edit buttons
+  renderSidebar();
+}
+
+function handleLoginBtn() {
+  if (currentUser) {
+    if (confirm('Sign out?')) logout();
+  } else {
+    openLogin();
+  }
+}
+
+function openLogin() {
+  document.getElementById('loginEmail').value    = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('loginEmail').focus(), 50);
+}
+
+function closeLogin() {
+  document.getElementById('loginOverlay').classList.remove('open');
+}
+
+async function submitLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Invalid email or password'; return; }
+  try {
+    const r = await fetch('/api/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const d = await r.json();
+    if (d.user) {
+      currentUser = d.user;
+      localStorage.setItem('auth_user', JSON.stringify(currentUser));
+      closeLogin();
+      updateAuthUI();
+    } else {
+      errEl.textContent = d.error || 'Invalid email or password';
+    }
+  } catch(e) { errEl.textContent = 'Network error'; }
+}
+
+async function logout() {
+  await fetch('/api/logout.php', { method: 'POST' });
+  currentUser = null;
+  localStorage.removeItem('auth_user');
+  updateAuthUI();
+}
+
 // ── Map setup ─────────────────────────────────────────────────────────────────
 const map = L.map('map');
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -492,6 +650,7 @@ function isParent(d) {
 
 // ── Toggle draw mode ──────────────────────────────────────────────────────────
 function toggleDrawMode() {
+  if (!canEdit()) return;
   if (drawMode) {
     cancelEdit();
     return;
@@ -719,10 +878,10 @@ function makeListItem(d, isChild, hasChildren) {
     <div class="district-swatch" style="background:${d.color};${!d.parent_id && hasChildren ? 'border-radius:2px;width:15px;height:15px;border:2px solid '+d.color+'99' : ''}"></div>
     <span class="district-name">${d.name}</span>
     <span class="district-count ${(hasChildren ? familyCount : d.photo_count) > 0 ? 'has' : ''}">${hasChildren ? familyCount : d.photo_count}</span>
-    <div class="district-actions">
+    ${canEditDistrict(d) ? `<div class="district-actions">
       <button class="icon-btn" title="Edit" onclick="event.stopPropagation();editDistrict(${d.id})">✏️</button>
       <button class="icon-btn del" title="Delete" onclick="event.stopPropagation();deleteDistrict(${d.id},'${d.name.replace(/'/g,"\\'")}')">🗑</button>
-    </div>`;
+    </div>` : ''}`;
   div.addEventListener('click', () => selectDistrict(d.id));
   return div;
 }
@@ -744,6 +903,8 @@ function renderDistrictPolygons() {
 
   ordered.forEach(d => {
     if (!d.coordinates || d.coordinates.length < 3) return;
+    // Only draw child districts if their parent is expanded or active
+    if (d.parent_id && !expandedParents.has(d.parent_id) && activeId !== d.parent_id) return;
     const isChild    = !!d.parent_id;
     const hasChildren = districts.some(c => c.parent_id === d.id);
     const isActive   = activeId === d.id || getDistrictFamily(activeId).includes(d.id);
@@ -781,10 +942,18 @@ function renderDistrictPolygons() {
 
 function selectDistrict(id) {
   activeId = id;
-  // Auto-expand parent when a child is selected
-  if (id) {
+  if (!id) {
+    // "All districts" — collapse everything back to city level
+    expandedParents.clear();
+  } else {
     const d = districts.find(x => x.id === id);
-    if (d?.parent_id) expandedParents.add(d.parent_id);
+    if (d?.parent_id) {
+      // Child selected — ensure its parent is expanded
+      expandedParents.add(d.parent_id);
+    } else if (d && districts.some(c => c.parent_id === d.id)) {
+      // City selected — expand its children
+      expandedParents.add(d.id);
+    }
   }
   renderSidebar();
   districtGroup.clearLayers();
@@ -1113,6 +1282,9 @@ function applyFilters() {
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 applyTranslations();
+// Hide Draw button until auth is confirmed
+document.getElementById('btnDraw').style.display = 'none';
+initAuth();
 
 (async () => {
   try {

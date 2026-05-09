@@ -6,7 +6,7 @@ class UploadManager: ObservableObject {
 
     // ── Configuration ─────────────────────────────────────────────────────────
     static let serverURL = "https://hrep.haskovo.org"
-    static let apiKey    = "api-key-here"
+    static let apiKey    = "api-key"
     // ─────────────────────────────────────────────────────────────────────────
 
     enum UploadError: LocalizedError {

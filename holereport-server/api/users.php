@@ -2,6 +2,12 @@
 require_once __DIR__ . '/db.php';
 cors();
 
+$u    = getCurrentUser();
+$type = $u['user_type'] ?? '';
+if (!in_array($type, ['admin', 'superadmin'], true)) {
+    json_out(['error' => 'Forbidden — admin or superadmin only'], 403);
+}
+
 $pdo    = db();
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -16,6 +22,7 @@ if ($method === 'PUT') {
     $mail    = isset($body['user_mail']) ? trim($body['user_mail']) : null;
     $pass    = isset($body['user_password']) && $body['user_password'] !== ''
                ? password_hash($body['user_password'], PASSWORD_BCRYPT) : null;
+    $city    = array_key_exists('city', $body) ? (trim($body['city']) ?: null) : false;
 
     $sets   = [];
     $params = [':id' => $id];
@@ -23,6 +30,7 @@ if ($method === 'PUT') {
     if ($type !== null)  { $sets[] = 'user_type = :type'; $params[':type'] = $type; }
     if ($mail !== null)  { $sets[] = 'user_mail = :mail'; $params[':mail'] = $mail ?: null; }
     if ($pass !== null)  { $sets[] = 'user_password = :pass'; $params[':pass'] = $pass; }
+    if ($city !== false) { $sets[] = 'city = :city'; $params[':city'] = $city; }
 
     if (!$sets) { http_response_code(400); json_out(['error' => 'nothing to update']); }
 
@@ -35,7 +43,7 @@ if ($method === 'PUT') {
 // ── GET — list all users ───────────────────────────────────────────────────
 $stmt = $pdo->query("
   SELECT id, device_id, photo_count, first_seen, last_seen,
-         user_type, user_mail
+         user_type, user_mail, city
   FROM users
   ORDER BY last_seen DESC
 ");
@@ -50,6 +58,7 @@ foreach ($stmt->fetchAll() as $u) {
         'last_seen'   => $u['last_seen'],
         'user_type'   => $u['user_type'] ?? 'user',
         'user_mail'   => $u['user_mail'],
+        'city'        => $u['city'],
     ];
 }
 

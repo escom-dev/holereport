@@ -179,12 +179,20 @@
   .user-dates { font-size: 11px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
   .user-dates strong { color: var(--text); }
   .view-photos-btn {
-    width: 100%; padding: 9px; background: rgba(79,142,247,.12);
-    border: 1px solid rgba(79,142,247,.3); border-radius: 8px;
+    width: 100%; padding: 9px; background: rgba(79,142,177,.12);
+    border: 1px solid rgba(79,142,177,.3); border-radius: 8px;
     color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer;
     transition: background .2s;
   }
-  .view-photos-btn:hover { background: rgba(79,142,247,.22); }
+  .view-photos-btn:hover { background: rgba(79,142,177,.22); }
+  .icon-edit-btn {
+    flex-shrink: 0; width: 34px; height: 34px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted); font-size: 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: border-color .2s, color .2s;
+  }
+  .icon-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   /* ── User type badge ── */
   .user-type-badge {
@@ -395,7 +403,7 @@
 <!-- Tab bar -->
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-photos" onclick="switchTab('photos')"><span data-i18n="tab.photos">📸 Photos</span></button>
-  <button class="tab-btn" id="tab-users" onclick="switchTab('users')"><span data-i18n="tab.devices">📱 Devices</span></button>
+  <button class="tab-btn" id="tab-users" onclick="switchTab('users')" style="display:none"><span data-i18n="tab.devices">📱 Devices</span></button>
   <a class="tab-btn" href="/map.html" style="text-decoration:none;"><span data-i18n="tab.map">🗺 Map</span></a>
 </div>
 
@@ -492,12 +500,16 @@
     <input type="hidden" id="editUserId">
     <div>
       <label data-i18n="user.edit.type">User Type</label>
-      <select id="editUserType">
+      <select id="editUserType" onchange="toggleCityField()">
         <option value="user">user</option>
         <option value="admin">admin</option>
         <option value="cityadmin">cityadmin</option>
         <option value="superadmin">superadmin</option>
       </select>
+    </div>
+    <div id="editCityRow" style="display:none">
+      <label data-i18n="user.edit.city">City</label>
+      <input type="text" id="editUserCity" placeholder="Haskovo">
     </div>
     <div>
       <label data-i18n="user.edit.mail">E-mail</label>
@@ -556,7 +568,7 @@ const TRANS = {
     'user.view': 'View', 'user.photos': 'photos', 'user.photo': 'photo',
     'user.edit': 'Edit', 'user.noemail': 'No email set',
     'user.edit.title': 'Edit User', 'user.edit.type': 'User Type',
-    'user.edit.mail': 'E-mail', 'user.edit.pass': 'New Password',
+    'user.edit.city': 'City', 'user.edit.mail': 'E-mail', 'user.edit.pass': 'New Password',
     'user.edit.save': 'Save', 'user.edit.cancel': 'Cancel',
     'user.edit.saved': 'Saved!', 'user.edit.error': 'Save failed',
     'login.btn': 'Sign In', 'login.title': 'Sign In', 'login.email': 'Email',
@@ -568,6 +580,7 @@ const TRANS = {
     'page.prev': '‹ Prev', 'page.next': 'Next ›',
     'copied': 'Copied!',
     'alt.unit': 'm',
+    'footer.privacy': 'Privacy Policy',
   },
   bg: {
     'tab.photos': '📸 Снимки', 'tab.devices': '📱 Устройства', 'tab.map': '🗺 Карта',
@@ -591,7 +604,7 @@ const TRANS = {
     'user.view': 'Виж', 'user.photos': 'снимки', 'user.photo': 'снимка',
     'user.edit': 'Редактирай', 'user.noemail': 'Без имейл',
     'user.edit.title': 'Редактирай потребител', 'user.edit.type': 'Тип потребител',
-    'user.edit.mail': 'Имейл', 'user.edit.pass': 'Нова парола',
+    'user.edit.city': 'Град', 'user.edit.mail': 'Имейл', 'user.edit.pass': 'Нова парола',
     'user.edit.save': 'Запази', 'user.edit.cancel': 'Отказ',
     'user.edit.saved': 'Запазено!', 'user.edit.error': 'Грешка при запис',
     'login.btn': 'Вход', 'login.title': 'Вход', 'login.email': 'Имейл',
@@ -603,6 +616,7 @@ const TRANS = {
     'page.prev': '‹ Предишна', 'page.next': 'Следваща ›',
     'copied': 'Копирано!',
     'alt.unit': 'м',
+    'footer.privacy': 'Политика за поверителност',
   }
 };
 
@@ -669,6 +683,8 @@ async function loadCategories() {
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(tab) {
+  const canSeeDevices = currentUser && ['admin','superadmin'].includes(currentUser.user_type);
+  if (tab === 'users' && !canSeeDevices) tab = 'photos';
   document.getElementById('photos-tab').style.display = tab === 'photos' ? '' : 'none';
   document.getElementById('users-tab').style.display  = tab === 'users'  ? '' : 'none';
   document.getElementById('tab-photos').classList.toggle('active', tab === 'photos');
@@ -869,7 +885,7 @@ function userCardHTML(u) {
   const mailHtml  = u.user_mail
     ? `<a href="mailto:${u.user_mail}">${u.user_mail}</a>`
     : `<em>${t('user.noemail')}</em>`;
-  const uData     = encodeURIComponent(JSON.stringify({id:u.id, user_type:type, user_mail:u.user_mail||''}));
+  const uData     = encodeURIComponent(JSON.stringify({id:u.id, user_type:type, user_mail:u.user_mail||'', city:u.city||''}));
   return `<div class="user-card">
     <div class="user-card-head">
       <div class="user-avatar">${emoji}</div>
@@ -879,7 +895,6 @@ function userCardHTML(u) {
       </div>
     </div>
     <span class="user-type-badge ${userTypeCls(type)}">${type}</span>
-    <div class="user-mail-row">✉ ${mailHtml}</div>
     <div class="user-stats">
       <div class="user-stat-box">
         <div class="user-stat-n">${u.photo_count}</div>
@@ -898,19 +913,24 @@ function userCardHTML(u) {
       <button class="view-photos-btn" style="flex:1" onclick="setUserFilter(${u.id}, '${u.device_id}')">
         📸 ${t('user.view')} ${u.photo_count} ${u.photo_count !== 1 ? t('user.photos') : t('user.photo')}
       </button>
-      <button class="view-photos-btn" style="flex:0 0 auto;padding:9px 14px" onclick="openUserEdit(${uData})">
-        ✏ ${t('user.edit')}
-      </button>
+      <button class="icon-edit-btn" onclick="openUserEdit(${uData})" title="${t('user.edit')}">✏</button>
     </div>
   </div>`;
+}
+
+function toggleCityField() {
+  const type = document.getElementById('editUserType').value;
+  document.getElementById('editCityRow').style.display = type === 'cityadmin' ? '' : 'none';
 }
 
 function openUserEdit(u) {
   document.getElementById('editUserId').value   = u.id;
   document.getElementById('editUserType').value = u.user_type || 'user';
+  document.getElementById('editUserCity').value = u.city || '';
   document.getElementById('editUserMail').value = u.user_mail || '';
   document.getElementById('editUserPass').value = '';
   document.getElementById('editUserMsg').textContent = '';
+  toggleCityField();
   document.getElementById('userEditOverlay').classList.add('open');
 }
 
@@ -921,6 +941,7 @@ function closeUserEdit() {
 async function saveUserEdit() {
   const id   = parseInt(document.getElementById('editUserId').value);
   const type = document.getElementById('editUserType').value;
+  const city = document.getElementById('editUserCity').value.trim();
   const mail = document.getElementById('editUserMail').value.trim();
   const pass = document.getElementById('editUserPass').value;
   const msg  = document.getElementById('editUserMsg');
@@ -930,7 +951,7 @@ async function saveUserEdit() {
     const r = await fetch(`${API}/users.php`, {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({id, user_type: type, user_mail: mail, user_password: pass})
+      body: JSON.stringify({id, user_type: type, city: city || null, user_mail: mail, user_password: pass})
     });
     const data = await r.json();
     if (data.ok) {
@@ -955,7 +976,7 @@ function hexToRgba(hex, alpha) {
 function shortDeviceId(id) {
   if (!id) return 'Unknown';
   const parts = id.split('-');
-  return 'iPhone-' + (parts[parts.length - 1] || id).toUpperCase();
+  return 'Phone-' + (parts[parts.length - 1] || id).toUpperCase();
 }
 
 function deviceEmoji(id) {
@@ -1006,10 +1027,17 @@ function openModal(p) {
   }
 
   const stKey = p.status || 'new';
-  info += '<div class="info-section"><h4>🏷 ' + t('stat.section') + '</h4>'
-    + '<select class="status-select" id="modal-status-sel" onchange="updateStatus(\'' + p.uuid + '\', this.value)">'
-    + Object.keys(STATUSES).map(function(k) { return '<option value="' + k + '"' + (stKey===k?' selected':'') + '>' + t('status.' + k) + '</option>'; }).join('')
-    + '</select><span class="status-saved" id="status-saved-msg">✓ ' + (currentLang === 'bg' ? 'Запазено' : 'Saved') + '</span></div>';
+  const canChangeStatus = currentUser && ['admin','cityadmin','superadmin'].includes(currentUser.user_type);
+  const st = STATUSES[stKey];
+  info += '<div class="info-section"><h4>🏷 ' + t('stat.section') + '</h4>';
+  if (canChangeStatus) {
+    info += '<select class="status-select" id="modal-status-sel" onchange="updateStatus(\'' + p.uuid + '\', this.value)">'
+      + Object.keys(STATUSES).map(function(k) { return '<option value="' + k + '"' + (stKey===k?' selected':'') + '>' + t('status.' + k) + '</option>'; }).join('')
+      + '</select><span class="status-saved" id="status-saved-msg">✓ ' + (currentLang === 'bg' ? 'Запазено' : 'Saved') + '</span>';
+  } else {
+    info += '<span class="badge badge-status" style="background:' + st.bg + ';color:' + st.color + ';border:1px solid ' + st.border + '">' + t('status.' + stKey) + '</span>';
+  }
+  info += '</div>';
 
   if (p.measurements && p.measurements.length) {
     info += '<div class="info-section"><h4>📐 ' + t('meas.section') + '</h4>';
@@ -1024,7 +1052,7 @@ function openModal(p) {
     '<a class="btn btn-primary" href="' + p.photo_url + '" download target="_blank">' + t('btn.download') + '</a>'
     + ' <button class="btn btn-ghost" onclick="copy(\'' + p.photo_url + '\')">' + t('btn.copyurl') + '</button>'
     + (p.latitude ? ' <a class="btn btn-ghost" href="https://maps.google.com/?q=' + p.latitude + ',' + p.longitude + '" target="_blank">' + t('btn.maps') + '</a>' : '')
-    + (p.user_id ? ' <button class="btn btn-ghost" onclick="closeModal();setUserFilter(' + p.user_id + ',\'' + p.device_id + '\')">' + t('btn.devicephotos') + '</button>' : '')
+    + (p.user_id && currentUser && ['admin','superadmin'].includes(currentUser.user_type) ? ' <button class="btn btn-ghost" onclick="closeModal();setUserFilter(' + p.user_id + ',\'' + p.device_id + '\')">' + t('btn.devicephotos') + '</button>' : '')
     + (currentUser && currentUser.user_type === 'superadmin' ? ' <button class="btn btn-danger" onclick="deletePhoto(\'' + p.uuid + '\')">' + t('btn.delete') + '</button>' : '');
 
   document.getElementById('modal').classList.add('open');
@@ -1043,11 +1071,17 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 let currentUser = null;
 
 async function initAuth() {
+  // Restore instantly from cache so UI doesn't flash "Sign In"
+  try { currentUser = JSON.parse(localStorage.getItem('auth_user')) || null; } catch(e) {}
+  updateAuthUI();
+  // Verify with server and sync
   try {
     const r = await fetch(`${API}/me.php`);
     const d = await r.json();
     currentUser = d.user || null;
-  } catch(e) { currentUser = null; }
+    if (currentUser) localStorage.setItem('auth_user', JSON.stringify(currentUser));
+    else localStorage.removeItem('auth_user');
+  } catch(e) { /* keep cached state on network error */ }
   updateAuthUI();
 }
 
@@ -1062,6 +1096,12 @@ function updateAuthUI() {
     btn.classList.remove('logged-in');
     btn.innerHTML = '👤 <span data-i18n="login.btn">' + t('login.btn') + '</span>';
     btn.onclick = handleLoginBtn;
+  }
+  const canSeeDevices = currentUser && ['admin','superadmin'].includes(currentUser.user_type);
+  document.getElementById('tab-users').style.display = canSeeDevices ? '' : 'none';
+  // If devices tab is active but user lost access, switch to photos
+  if (!canSeeDevices && document.getElementById('users-tab').style.display !== 'none') {
+    switchTab('photos');
   }
 }
 
@@ -1100,6 +1140,7 @@ async function submitLogin() {
     const d = await r.json();
     if (d.user) {
       currentUser = d.user;
+      localStorage.setItem('auth_user', JSON.stringify(currentUser));
       closeLogin();
       updateAuthUI();
     } else {
@@ -1111,6 +1152,7 @@ async function submitLogin() {
 async function logout() {
   await fetch(`${API}/logout.php`, {method: 'POST'});
   currentUser = null;
+  localStorage.removeItem('auth_user');
   updateAuthUI();
 }
 
@@ -1186,5 +1228,12 @@ loadCategories();
 loadPage(1);
 loadUsers();
 </script>
+
+<footer style="text-align:center;padding:24px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px;">
+  <span>© 2026 ESCOM.</span>
+  &nbsp;·&nbsp;
+  <a href="/privacy.html" id="footer-privacy-link" data-i18n="footer.privacy" style="color:var(--muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a>
+</footer>
+
 </body>
 </html>

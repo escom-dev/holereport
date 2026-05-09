@@ -23,10 +23,10 @@ struct MapTabView: View {
 
     @State private var selectedCluster: PhotoCluster?
     @State private var detailPhoto: MeasuredPhoto?
-    @State private var region = MKCoordinateRegion(
+    @State private var position: MapCameraPosition = .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 42.5, longitude: 25.5),
         span: MKCoordinateSpan(latitudeDelta: 5, longitudeDelta: 5)
-    )
+    ))
     @State private var hasSetInitialRegion = false
 
     var clusters: [PhotoCluster] {
@@ -53,19 +53,21 @@ struct MapTabView: View {
             ZStack {
                 if clusters.isEmpty {
                     ContentUnavailableView(
-                        "No Locations Yet",
+                        loc("No Locations Yet"),
                         systemImage: "map",
-                        description: Text("Photos with GPS data will appear as markers on the map.")
+                        description: Text(loc("Photos with GPS data will appear as markers on the map."))
                     )
                 } else {
-                    Map(coordinateRegion: $region, annotationItems: clusters) { cluster in
-                        MapAnnotation(coordinate: cluster.coordinate) {
-                            ClusterPin(cluster: cluster, isSelected: selectedCluster?.id == cluster.id)
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.3)) {
-                                        selectedCluster = (selectedCluster?.id == cluster.id) ? nil : cluster
+                    Map(position: $position) {
+                        ForEach(clusters) { cluster in
+                            Annotation("", coordinate: cluster.coordinate, anchor: .bottom) {
+                                ClusterPin(cluster: cluster, isSelected: selectedCluster?.id == cluster.id)
+                                    .onTapGesture {
+                                        withAnimation(.spring(response: 0.3)) {
+                                            selectedCluster = (selectedCluster?.id == cluster.id) ? nil : cluster
+                                        }
                                     }
-                                }
+                            }
                         }
                     }
                     .ignoresSafeArea(edges: .bottom)
@@ -97,7 +99,7 @@ struct MapTabView: View {
                     }
                 }
             }
-            .navigationTitle("Map")
+            .navigationTitle(loc("Map"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if !clusters.isEmpty {
@@ -111,7 +113,7 @@ struct MapTabView: View {
             .onAppear {
                 if !hasSetInitialRegion { fitAllMarkers(); hasSetInitialRegion = true }
             }
-            .onChange(of: photoStore.photos.count) { _ in fitAllMarkers() }
+            .onChange(of: photoStore.photos.count) { fitAllMarkers() }
             .sheet(item: $detailPhoto) { photo in
                 PhotoDetailView(photo: photo)
                     .environmentObject(photoStore)
@@ -126,7 +128,7 @@ struct MapTabView: View {
         let lons = clusters.map { $0.coordinate.longitude }
         let minLat = lats.min()!, maxLat = lats.max()!
         let minLon = lons.min()!, maxLon = lons.max()!
-        region = MKCoordinateRegion(
+        position = .region(MKCoordinateRegion(
             center: CLLocationCoordinate2D(
                 latitude:  (minLat + maxLat) / 2,
                 longitude: (minLon + maxLon) / 2
@@ -135,7 +137,7 @@ struct MapTabView: View {
                 latitudeDelta:  max(0.01, (maxLat - minLat) * 1.4),
                 longitudeDelta: max(0.01, (maxLon - minLon) * 1.4)
             )
-        )
+        ))
     }
 }
 
@@ -238,7 +240,7 @@ struct PhotoMapCard: View {
                         .font(.caption).foregroundColor(.yellow).lineLimit(1)
                 }
                 Button(action: onOpen) {
-                    Label("Open Photo", systemImage: "photo")
+                    Label(loc("Open Photo"), systemImage: "photo")
                         .font(.caption.weight(.semibold)).foregroundColor(.blue)
                 }
             }
@@ -274,7 +276,7 @@ struct ClusterListCard: View {
 
             // Header
             HStack {
-                Label("\(cluster.count) photos at this location", systemImage: "photo.stack.fill")
+                Label(String(format: loc("%d photos at this location"), cluster.count), systemImage: "photo.stack.fill")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Button(action: onDismiss) {
@@ -316,7 +318,7 @@ struct ClusterListCard: View {
                                         Label(photo.measurements.map { $0.displayString }.joined(separator: " • "), systemImage: "ruler")
                                             .font(.caption).foregroundColor(.yellow).lineLimit(1)
                                     } else {
-                                        Text("No measurements")
+                                        Text(loc("No measurements"))
                                             .font(.caption).foregroundColor(.secondary)
                                     }
                                 }

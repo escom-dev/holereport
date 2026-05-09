@@ -120,7 +120,7 @@ struct GPSInfoBar: View {
                     }
                 }
             } else {
-                Text("Acquiring GPS…")
+                Text(loc("Acquiring GPS…"))
                     .font(.caption).foregroundColor(.white.opacity(0.7))
             }
 
@@ -176,7 +176,7 @@ struct BottomControlBar: View {
             // Torch
             ControlButton(
                 icon: viewModel.isTorchOn ? "flashlight.on.fill" : "flashlight.off.fill",
-                label: viewModel.isTorchOn ? "Light On" : "Light",
+                label: loc(viewModel.isTorchOn ? "Light On" : "Light"),
                 iconColor: viewModel.isTorchOn ? .yellow : .white,
                 bgColor: viewModel.isTorchOn ? Color(white: 0.32) : Color(white: 0.18),
                 disabled: false
@@ -185,7 +185,7 @@ struct BottomControlBar: View {
             // Clear
             ControlButton(
                 icon: "trash.fill",
-                label: "Clear",
+                label: loc("Clear"),
                 iconColor: .white,
                 bgColor: Color(white: 0.18),
                 disabled: viewModel.currentMeasurements.isEmpty
@@ -209,7 +209,7 @@ struct BottomControlBar: View {
             // Measure / Cancel
             ControlButton(
                 icon: viewModel.isMeasuring ? "xmark" : "ruler.fill",
-                label: viewModel.isMeasuring ? "Cancel" : "Measure",
+                label: loc(viewModel.isMeasuring ? "Cancel" : "Measure"),
                 iconColor: .white,
                 bgColor: viewModel.isMeasuring ? .red : Color(white: 0.18),
                 disabled: false
@@ -267,6 +267,7 @@ struct PhotoPreviewSheet: View {
     @ObservedObject var uploadManager: UploadManager
     @EnvironmentObject var photoStore: PhotoStore
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var languageManager = LanguageManager.shared
 
     @State private var savedLocally = false
     @State private var uploadState: UploadState = .idle
@@ -317,16 +318,16 @@ struct PhotoPreviewSheet: View {
                 // Category picker
                 if !categories.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Category")
+                        Text(loc("Category"))
                             .font(.caption).foregroundColor(.white.opacity(0.6))
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                CategoryChip(label: "None", color: .gray, isSelected: selectedCategoryId == nil) {
+                                CategoryChip(label: loc("None"), color: .gray, isSelected: selectedCategoryId == nil) {
                                     selectedCategoryId = nil
                                 }
                                 ForEach(categories) { cat in
                                     CategoryChip(
-                                        label: cat.nameEn.isEmpty ? cat.name : cat.nameEn,
+                                        label: languageManager.currentLanguage == "bg" ? cat.name : (cat.nameEn.isEmpty ? cat.name : cat.nameEn),
                                         color: Color(hex: cat.color) ?? .blue,
                                         isSelected: selectedCategoryId == cat.id
                                     ) { selectedCategoryId = cat.id }
@@ -350,7 +351,7 @@ struct PhotoPreviewSheet: View {
                         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                         savedLocally = true
                     } label: {
-                        Label(savedLocally ? "Saved" : "Save", systemImage: savedLocally ? "checkmark" : "square.and.arrow.down")
+                        Label(loc(savedLocally ? "Saved" : "Save"), systemImage: savedLocally ? "checkmark" : "square.and.arrow.down")
                             .font(.subheadline.weight(.semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 16).padding(.vertical, 11)
@@ -403,7 +404,7 @@ struct PhotoPreviewSheet: View {
         case .success(let url):
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
-                Text("Uploaded!").foregroundColor(.green)
+                Text(loc("Uploaded!")).foregroundColor(.green)
                 Text(url).foregroundColor(.white.opacity(0.5)).lineLimit(1).truncationMode(.middle)
             }
             .font(.caption)
@@ -420,10 +421,10 @@ struct PhotoPreviewSheet: View {
 
     var uploadButtonLabel: String {
         switch uploadState {
-        case .uploading: return "Uploading…"
-        case .success:   return "Uploaded ✓"
-        case .failure:   return "Retry Upload"
-        default:         return "Upload"
+        case .uploading: return NSLocalizedString("Uploading…", comment: "")
+        case .success:   return NSLocalizedString("Uploaded ✓", comment: "")
+        case .failure:   return NSLocalizedString("Retry Upload", comment: "")
+        default:         return NSLocalizedString("Upload", comment: "")
         }
     }
 
@@ -453,7 +454,7 @@ struct PhotoPreviewSheet: View {
 
 // MARK: - Category Chip
 
-private struct CategoryChip: View {
+struct CategoryChip: View {
     let label: String
     let color: Color
     let isSelected: Bool
@@ -476,7 +477,7 @@ private struct CategoryChip: View {
 
 // MARK: - Color from hex string
 
-private extension Color {
+extension Color {
     init?(hex: String) {
         var h = hex.trimmingCharacters(in: .init(charactersIn: "#"))
         if h.count == 3 { h = h.map { "\($0)\($0)" }.joined() }

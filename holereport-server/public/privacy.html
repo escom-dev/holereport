@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Hole Report</title>
+<style>
+  :root {
+    --bg:      #0f1117;
+    --surface: #1a1d27;
+    --card:    #21253a;
+    --border:  #2e3250;
+    --accent:  #4f8ef7;
+    --text:    #e2e8f0;
+    --muted:   #8892a4;
+    --radius:  12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; line-height: 1.7; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); }
+  .logo span { color: var(--accent); }
+  .back-btn {
+    margin-left: auto;
+    padding: 6px 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px; font-weight: 600;
+    text-decoration: none; transition: border-color .2s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .lang-btn {
+    padding: 5px 12px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: border-color .2s; letter-spacing: .5px;
+  }
+  .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .container {
+    max-width: 780px;
+    margin: 48px auto;
+    padding: 0 24px 80px;
+  }
+
+  .page-title {
+    font-size: 28px; font-weight: 800; margin-bottom: 6px;
+  }
+  .page-subtitle {
+    font-size: 13px; color: var(--muted); margin-bottom: 40px;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .section h2 {
+    font-size: 16px; font-weight: 700; color: var(--accent);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .section p { font-size: 14px; color: var(--text); margin-bottom: 10px; }
+  .section p:last-child { margin-bottom: 0; }
+  .section ul {
+    list-style: none; padding: 0; margin: 10px 0 10px 0;
+  }
+  .section ul li {
+    font-size: 14px; color: var(--text);
+    padding: 5px 0 5px 18px; position: relative;
+  }
+  .section ul li::before {
+    content: '–'; position: absolute; left: 0; color: var(--accent);
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">📸 Hole <span>report</span></a>
+  <a class="back-btn" href="/" id="backBtn">← Back</a>
+  <button id="langBtn" class="lang-btn" onclick="setLang(currentLang==='en'?'bg':'en')">BG</button>
+</header>
+
+<div class="container">
+  <div class="page-title" id="pp-title">Privacy Policy</div>
+  <div class="page-subtitle" id="pp-subtitle">Last updated: April 23, 2026 &nbsp;·&nbsp; ESCOM</div>
+
+  <!-- 1. Introduction -->
+  <div class="section">
+    <h2>📋 <span id="s1-title">1. Introduction</span></h2>
+    <p id="s1-p1">ESCOM ("we", "our", "us") operates the Hole Report mobile application and web platform. This Privacy Policy explains what personal data we collect, why we collect it, and how we use it.</p>
+    <p id="s1-p2">By using the Hole Report app or website, you agree to the practices described in this policy.</p>
+  </div>
+
+  <!-- 2. Data Collected -->
+  <div class="section">
+    <h2>📦 <span id="s2-title">2. Data We Collect</span></h2>
+    <p id="s2-intro">When you use the Hole Report app, the following data may be collected and uploaded to our server:</p>
+    <ul>
+      <li id="s2-li1"><strong>Photos</strong> — images captured through the app, including embedded EXIF metadata.</li>
+      <li id="s2-li2"><strong>GPS coordinates</strong> — latitude, longitude, and altitude at the moment of capture.</li>
+      <li id="s2-li3"><strong>Address</strong> — reverse-geocoded street address derived from GPS coordinates.</li>
+      <li id="s2-li4"><strong>AR measurements</strong> — real-world dimensions measured via the device camera.</li>
+      <li id="s2-li5"><strong>Device identifier</strong> — a unique identifier assigned to your device to group your uploads.</li>
+      <li id="s2-li6"><strong>Upload timestamp</strong> — date and time when the photo was submitted.</li>
+    </ul>
+    <p id="s2-note">We do <strong>not</strong> collect your name, email address, or any account credentials unless you voluntarily provide them when contacting us.</p>
+  </div>
+
+  <!-- 3. Purpose -->
+  <div class="section">
+    <h2>🎯 <span id="s3-title">3. Purpose of Processing</span></h2>
+    <p id="s3-intro">The data listed above is collected solely to:</p>
+    <ul>
+      <li id="s3-li1">Enable reporting of road defects (potholes, cracks, etc.) to the responsible authorities.</li>
+      <li id="s3-li2">Attach accurate location and dimension information to each report.</li>
+      <li id="s3-li3">Allow authorised staff to review, categorise, and track the status of reports.</li>
+      <li id="s3-li4">Generate aggregated statistical summaries (no individual identification).</li>
+    </ul>
+  </div>
+
+  <!-- 4. Data Sharing -->
+  <div class="section">
+    <h2>🤝 <span id="s4-title">4. Data Sharing</span></h2>
+    <p id="s4-p1">We do not sell, rent, or trade your data to third parties.</p>
+    <p id="s4-p2">Uploaded photos and location data may be shared with municipal or government authorities solely for the purpose of road maintenance and repair.</p>
+    <p id="s4-p3">We may disclose data if required by applicable law or a valid legal request.</p>
+  </div>
+
+  <!-- 5. Retention -->
+  <div class="section">
+    <h2>🗓 <span id="s5-title">5. Data Retention</span></h2>
+    <p id="s5-p1">Photos and associated metadata are retained for as long as necessary to fulfil the purposes described above, or until you request deletion.</p>
+    <p id="s5-p2">To request deletion of your uploaded data, please contact us at <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>.</p>
+  </div>
+
+  <!-- 6. Security -->
+  <div class="section">
+    <h2>🔒 <span id="s6-title">6. Security</span></h2>
+    <p id="s6-p1">We implement appropriate technical and organisational measures to protect your data against unauthorised access, loss, or disclosure.</p>
+    <p id="s6-p2">Access to uploaded reports is restricted to authorised ESCOM personnel and designated municipal users.</p>
+  </div>
+
+  <!-- 7. Your Rights -->
+  <div class="section">
+    <h2>⚖️ <span id="s7-title">7. Your Rights</span></h2>
+    <p id="s7-intro">Under applicable data protection law (including GDPR where applicable), you have the right to:</p>
+    <ul>
+      <li id="s7-li1">Access the personal data we hold about your device.</li>
+      <li id="s7-li2">Request correction of inaccurate data.</li>
+      <li id="s7-li3">Request deletion of your data.</li>
+      <li id="s7-li4">Object to or restrict processing of your data.</li>
+    </ul>
+    <p id="s7-contact">To exercise any of these rights, contact us at <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>.</p>
+  </div>
+
+  <!-- 8. Changes -->
+  <div class="section">
+    <h2>🔄 <span id="s8-title">8. Changes to This Policy</span></h2>
+    <p id="s8-p1">We may update this Privacy Policy from time to time. The updated version will always be available at this page with a revised "Last updated" date.</p>
+    <p id="s8-p2">Continued use of the app or website after changes constitutes acceptance of the revised policy.</p>
+  </div>
+
+  <!-- 9. Contact -->
+  <div class="section">
+    <h2>✉️ <span id="s9-title">9. Contact</span></h2>
+    <p id="s9-p1">If you have any questions about this Privacy Policy, please contact us:</p>
+    <p><strong>ESCOM</strong><br>
+      <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>
+    </p>
+  </div>
+</div>
+
+<footer>
+  <span id="footer-copy">© 2026 ESCOM. All rights reserved.</span>
+  &nbsp;·&nbsp;
+  <a href="/privacy.html" id="footer-pp">Privacy Policy</a>
+  &nbsp;·&nbsp;
+  <a href="/">Hole Report</a>
+</footer>
+
+<script>
+let currentLang = 'en';
+
+const TRANS = {
+  en: {
+    'back': '← Back',
+    'title': 'Privacy Policy',
+    'subtitle': 'Last updated: April 23, 2026 · ESCOM',
+    's1-title': '1. Introduction',
+    's1-p1': 'ESCOM ("we", "our", "us") operates the Hole Report mobile application and web platform. This Privacy Policy explains what personal data we collect, why we collect it, and how we use it.',
+    's1-p2': 'By using the Hole Report app or website, you agree to the practices described in this policy.',
+    's2-title': '2. Data We Collect',
+    's2-intro': 'When you use the Hole Report app, the following data may be collected and uploaded to our server:',
+    's2-li1': '<strong>Photos</strong> — images captured through the app, including embedded EXIF metadata.',
+    's2-li2': '<strong>GPS coordinates</strong> — latitude, longitude, and altitude at the moment of capture.',
+    's2-li3': '<strong>Address</strong> — reverse-geocoded street address derived from GPS coordinates.',
+    's2-li4': '<strong>AR measurements</strong> — real-world dimensions measured via the device camera.',
+    's2-li5': '<strong>Device identifier</strong> — a unique identifier assigned to your device to group your uploads.',
+    's2-li6': '<strong>Upload timestamp</strong> — date and time when the photo was submitted.',
+    's2-note': 'We do <strong>not</strong> collect your name, email address, or any account credentials unless you voluntarily provide them when contacting us.',
+    's3-title': '3. Purpose of Processing',
+    's3-intro': 'The data listed above is collected solely to:',
+    's3-li1': 'Enable reporting of road defects (potholes, cracks, etc.) to the responsible authorities.',
+    's3-li2': 'Attach accurate location and dimension information to each report.',
+    's3-li3': 'Allow authorised staff to review, categorise, and track the status of reports.',
+    's3-li4': 'Generate aggregated statistical summaries (no individual identification).',
+    's4-title': '4. Data Sharing',
+    's4-p1': 'We do not sell, rent, or trade your data to third parties.',
+    's4-p2': 'Uploaded photos and location data may be shared with municipal or government authorities solely for the purpose of road maintenance and repair.',
+    's4-p3': 'We may disclose data if required by applicable law or a valid legal request.',
+    's5-title': '5. Data Retention',
+    's5-p1': 'Photos and associated metadata are retained for as long as necessary to fulfil the purposes described above, or until you request deletion.',
+    's5-p2': 'To request deletion of your uploaded data, please contact us at <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>.',
+    's6-title': '6. Security',
+    's6-p1': 'We implement appropriate technical and organisational measures to protect your data against unauthorised access, loss, or disclosure.',
+    's6-p2': 'Access to uploaded reports is restricted to authorised ESCOM personnel and designated municipal users.',
+    's7-title': '7. Your Rights',
+    's7-intro': 'Under applicable data protection law (including GDPR where applicable), you have the right to:',
+    's7-li1': 'Access the personal data we hold about your device.',
+    's7-li2': 'Request correction of inaccurate data.',
+    's7-li3': 'Request deletion of your data.',
+    's7-li4': 'Object to or restrict processing of your data.',
+    's7-contact': 'To exercise any of these rights, contact us at <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>.',
+    's8-title': '8. Changes to This Policy',
+    's8-p1': 'We may update this Privacy Policy from time to time. The updated version will always be available at this page with a revised "Last updated" date.',
+    's8-p2': 'Continued use of the app or website after changes constitutes acceptance of the revised policy.',
+    's9-title': '9. Contact',
+    's9-p1': 'If you have any questions about this Privacy Policy, please contact us:',
+    'footer-copy': '© 2026 ESCOM. All rights reserved.',
+    'footer-pp': 'Privacy Policy',
+  },
+  bg: {
+    'back': '← Назад',
+    'title': 'Политика за поверителност',
+    'subtitle': 'Последна актуализация: 23 април 2026 г. · ESCOM',
+    's1-title': '1. Въведение',
+    's1-p1': 'ESCOM („ние", „нас") управлява мобилното приложение и уеб платформата Hole Report. Настоящата Политика за поверителност обяснява какви лични данни събираме, защо ги събираме и как ги използваме.',
+    's1-p2': 'Използвайки приложението или уебсайта на Hole Report, вие се съгласявате с практиките, описани в тази политика.',
+    's2-title': '2. Данни, които събираме',
+    's2-intro': 'При използване на приложението Hole Report могат да бъдат събрани и качени на нашия сървър следните данни:',
+    's2-li1': '<strong>Снимки</strong> — изображения, заснети чрез приложението, включително вградени EXIF метаданни.',
+    's2-li2': '<strong>GPS координати</strong> — географска ширина, дължина и надморска височина към момента на заснемане.',
+    's2-li3': '<strong>Адрес</strong> — улично адресно определяне, получено от GPS координатите.',
+    's2-li4': '<strong>AR измервания</strong> — реални размери, измерени чрез камерата на устройството.',
+    's2-li5': '<strong>Идентификатор на устройство</strong> — уникален идентификатор, присвоен на вашето устройство за групиране на качванията.',
+    's2-li6': '<strong>Времеви печат</strong> — дата и час на качване на снимката.',
+    's2-note': 'Ние <strong>не</strong> събираме вашето име, имейл адрес или данни за акаунт, освен ако не ни ги предоставите доброволно при контакт с нас.',
+    's3-title': '3. Цел на обработката',
+    's3-intro': 'Данните, изброени по-горе, се събират единствено за:',
+    's3-li1': 'Подаване на сигнали за дефекти по пътищата (дупки, пукнатини и др.) до отговорните органи.',
+    's3-li2': 'Прикачване на точна информация за местоположение и размери към всеки сигнал.',
+    's3-li3': 'Преглед, категоризиране и проследяване на статуса на сигналите от упълномощен персонал.',
+    's3-li4': 'Генериране на обобщени статистически данни (без идентифициране на физически лица).',
+    's4-title': '4. Споделяне на данни',
+    's4-p1': 'Ние не продаваме, отдаваме под наем или предоставяме вашите данни на трети страни.',
+    's4-p2': 'Качените снимки и данни за местоположение могат да бъдат споделени с общински или държавни органи единствено за целите на поддръжката и ремонта на пътищата.',
+    's4-p3': 'Може да разкрием данни, ако това се изисква от приложимото законодателство или валидно правно искане.',
+    's5-title': '5. Съхранение на данните',
+    's5-p1': 'Снимките и свързаните метаданни се съхраняват толкова дълго, колкото е необходимо за изпълнение на описаните цели, или до поискване на изтриване от ваша страна.',
+    's5-p2': 'За да поискате изтриване на качените от вас данни, свържете се с нас на <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>.',
+    's6-title': '6. Сигурност',
+    's6-p1': 'Прилагаме подходящи технически и организационни мерки за защита на вашите данни срещу неоторизиран достъп, загуба или разкриване.',
+    's6-p2': 'Достъпът до качените сигнали е ограничен до упълномощен персонал на ESCOM и определени общински потребители.',
+    's7-title': '7. Вашите права',
+    's7-intro': 'Съгласно приложимото законодателство за защита на данните (включително GDPR), вие имате право да:',
+    's7-li1': 'Получите достъп до личните данни, които съхраняваме за вашето устройство.',
+    's7-li2': 'Поискате коригиране на неточни данни.',
+    's7-li3': 'Поискате изтриване на вашите данни.',
+    's7-li4': 'Възразите срещу или ограничите обработката на вашите данни.',
+    's7-contact': 'За упражняване на тези права се свържете с нас на <a href="mailto:escomdev@escom.bg">escomdev@escom.bg</a>.',
+    's8-title': '8. Промени в тази политика',
+    's8-p1': 'Можем периодично да актуализираме тази Политика за поверителност. Актуализираната версия винаги ще бъде достъпна на тази страница с нова дата „Последна актуализация".',
+    's8-p2': 'Продължаването на използване на приложението или уебсайта след промените означава приемане на актуализираната политика.',
+    's9-title': '9. Контакт',
+    's9-p1': 'Ако имате въпроси относно тази Политика за поверителност, свържете се с нас:',
+    'footer-copy': '© 2026 ESCOM. Всички права запазени.',
+    'footer-pp': 'Политика за поверителност',
+  }
+};
+
+function t(key) {
+  return (TRANS[currentLang] && TRANS[currentLang][key]) || TRANS.en[key] || key;
+}
+
+function applyTranslations() {
+  document.getElementById('backBtn').textContent = t('back');
+  document.getElementById('pp-title').textContent = t('title');
+  document.getElementById('pp-subtitle').innerHTML = t('subtitle');
+  document.getElementById('langBtn').textContent = currentLang === 'en' ? 'BG' : 'EN';
+
+  const ids = [
+    's1-title','s1-p1','s1-p2',
+    's2-title','s2-intro','s2-note',
+    's3-title','s3-intro',
+    's4-title','s4-p1','s4-p2','s4-p3',
+    's5-title','s5-p1','s5-p2',
+    's6-title','s6-p1','s6-p2',
+    's7-title','s7-intro','s7-contact',
+    's8-title','s8-p1','s8-p2',
+    's9-title','s9-p1',
+    'footer-copy','footer-pp',
+  ];
+  ids.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = t(id);
+  });
+
+  // list items
+  const liIds = [
+    's2-li1','s2-li2','s2-li3','s2-li4','s2-li5','s2-li6',
+    's3-li1','s3-li2','s3-li3','s3-li4',
+    's7-li1','s7-li2','s7-li3','s7-li4',
+  ];
+  liIds.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = t(id);
+  });
+
+  document.documentElement.lang = currentLang;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  applyTranslations();
+}
+
+applyTranslations();
+</script>
+</body>
+</html>

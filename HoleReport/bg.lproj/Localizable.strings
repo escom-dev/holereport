@@ -1,0 +1,139 @@
+/* ── Safety Warning ── */
+"Safety Warning" = "Предупреждение за безопасност";
+"Do not use this app while driving" = "Не използвайте приложението по време на шофиране";
+"Keep your eyes on the road at all times" = "Дръжте очите си на пътя по всяко време";
+"Use AR measurement mode only when stationary" = "Използвайте AR режим само при спрял автомобил";
+"Mount your phone safely before starting the Drive tab" = "Закрепете телефона безопасно преди да стартирате таб Шофиране";
+"This app is for road documentation purposes only. The developer is not responsible for accidents caused by improper use." = "Приложението е само за документиране на пътища. Разработчикът не носи отговорност за инциденти от неправилна употреба.";
+"I Understand — Continue" = "Разбрах — Продължи";
+
+/* ── Welcome ── */
+"Hole Report" = "Hole Report";
+"AR Measurements + GPS Photo Log" = "AR Измервания + GPS Снимки";
+"AR Measurements" = "AR Измервания";
+"Measure real-world distances with your camera" = "Измервайте реални разстояния с камерата";
+"GPS Tagging" = "GPS Маркиране";
+"Every photo stamped with exact coordinates" = "Всяка снимка с точни координати";
+"Server Upload" = "Качване на сървъра";
+"Sync photos to your Hole Report server" = "Синхронизирайте снимки с вашия сървър";
+"Get Started" = "Започнете";
+
+/* ── Tab bar ── */
+"Camera" = "Камера";
+"Gallery" = "Галерия";
+"Map" = "Карта";
+"Settings" = "Настройки";
+
+/* ── Settings ── */
+"Server URL" = "URL на сървъра";
+"API Key" = "API ключ";
+"Server Configuration" = "Конфигурация на сървъра";
+"Server URL and API key are built into the app." = "URL на сървъра и API ключът са вградени в приложението.";
+"Testing…" = "Тест…";
+"Test Connection" = "Тест на връзката";
+"Connection" = "Връзка";
+"Email" = "Имейл";
+"Password" = "Парола";
+"User Type" = "Тип потребител";
+"Creating…" = "Създаване…";
+"Create User" = "Създай потребител";
+"Creates a web login account in the server database." = "Създава уеб акаунт в базата данни на сървъра.";
+"Connected to server ✓" = "Свързано със сървъра ✓";
+"Connected! %d photo(s) on server." = "Свързано! %d снимка/и на сървъра.";
+"HTTP %d — check server" = "HTTP %d — проверете сървъра";
+"Invalid URL" = "Невалиден URL";
+"Invalid server URL" = "Невалиден URL на сървъра";
+"Invalid server response" = "Невалиден отговор от сървъра";
+"Unexpected response" = "Неочакван отговор";
+"Updated ✓ (%@)" = "Обновено ✓ (%@)";
+"Created ✓ (%@)" = "Създадено ✓ (%@)";
+
+/* ── Camera ── */
+"Acquiring GPS…" = "Получаване на GPS…";
+"Light On" = "Светлина вкл.";
+"Light" = "Светлина";
+"Clear" = "Изчисти";
+"Cancel" = "Откажи";
+"Measure" = "Измери";
+"Point camera at a surface" = "Насочете камерата към повърхност";
+"Tap a surface to place the first point" = "Докоснете повърхност за първа точка";
+"Now tap the second point" = "Докоснете втората точка";
+"No surface detected — move camera slowly over a surface" = "Не е открита повърхност — движете камерата бавно";
+"Measurement %d" = "Измерване %d";
+"%@ — tap again for another, or capture" = "%@ — докоснете пак или снимайте";
+
+/* ── Photo preview / upload ── */
+"Category" = "Категория";
+"None" = "Няма";
+"Save" = "Запази";
+"Saved" = "Запазено";
+"Upload" = "Качи";
+"Uploading…" = "Качване…";
+"Uploaded ✓" = "Качено ✓";
+"Uploaded!" = "Качено!";
+"Retry Upload" = "Опитай отново";
+
+/* ── Map ── */
+"No Locations Yet" = "Няма местоположения";
+"Photos with GPS data will appear as markers on the map." = "Снимки с GPS данни ще се покажат като маркери на картата.";
+"%d photos at this location" = "%d снимки на това място";
+"Open Photo" = "Отвори снимка";
+"No measurements" = "Няма измервания";
+
+/* ── Drive / Pothole detector ── */
+"Drive" = "Шофиране";
+"Start Detection" = "Стартирай засичане";
+"Stop Detection" = "Спри засичане";
+"Detection Settings" = "Настройки за засичане";
+"G-force Threshold" = "Праг G-сила";
+"Min Speed" = "Мин. скорост";
+"Cooldown" = "Пауза";
+"Pothole Log" = "Журнал дупки";
+"%d events" = "%d събития";
+"No potholes detected yet." = "Няма засечени дупки.";
+"Idle" = "Неактивно";
+"Accel" = "Ускорение";
+"Detected" = "Засечено";
+"holes" = "дупки";
+"Clear pothole log?" = "Изчисти журнала?";
+"Clear Log" = "Изчисти журнала";
+"Stopped" = "Спряно";
+"Accelerometer not available" = "Акселерометърът не е наличен";
+"Pothole! %.1f G at %.0f km/h" = "Дупка! %.1f G при %.0f км/ч";
+"Armed • %.0f km/h" = "Активно • %.0f км/ч";
+"Waiting • %.0f km/h" = "Изчакване • %.0f км/ч";
+"Pothole Map" = "Карта дупки";
+"Open in Google Maps" = "Отвори в Google Maps";
+"Share Location" = "Сподели местоположение";
+"Filter" = "Филтър";
+"Filter by Date" = "Филтрирай по дата";
+"Filter by G-force" = "Филтрирай по G-сила";
+"Min G" = "Мин. G";
+"Max G" = "Макс. G";
+"From" = "От";
+"To" = "До";
+"%d of %d events" = "%d от %d събития";
+"No events in selected range." = "Няма събития в избрания период.";
+"Delete %d Events" = "Изтрий %d събития";
+"Delete %d filtered events?" = "Изтрий %d филтрирани?";
+"Delete" = "Изтрий";
+"OK" = "ОК";
+"Upload Complete" = "Качването завърши";
+"Upload Failed" = "Грешка при качване";
+"%d events uploaded to server." = "%d събития качени на сървъра.";
+
+/* ── Gallery ── */
+"No Photos Yet" = "Няма снимки";
+"Capture photos with measurements using the Camera tab." = "Снимайте с измервания от раздела Камера.";
+"Photo Details" = "Детайли на снимката";
+"Done" = "Готово";
+"Date" = "Дата";
+"GPS" = "GPS";
+"Altitude" = "Височина";
+"Address" = "Адрес";
+"Location" = "Местоположение";
+"Measurements" = "Измервания";
+"Upload to Server" = "Качи на сървъра";
+"Retry Upload" = "Опитай отново";
+"Share with Metadata" = "Сподели с метаданни";
+"Previously uploaded" = "Вече качено";
